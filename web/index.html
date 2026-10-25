@@ -1,0 +1,170 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>beam</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Cpath d='M4 22 L16 6 L28 22' fill='none' stroke='%2322d3ee' stroke-width='4' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E">
+<link rel="stylesheet" href="/style.css">
+<script src="/app.js" defer></script>
+</head>
+<body>
+<header class="topbar">
+  <div class="brand">
+    <svg viewBox="0 0 32 32" class="logo" aria-hidden="true"><path d="M4 22 L16 6 L28 22"/><path d="M10 26 L16 18 L22 26" class="logo2"/></svg>
+    <span class="brand-name">beam</span>
+  </div>
+  <div class="device" id="device">
+    <span class="dot" id="conn-dot" title="connection to daemon"></span>
+    <span id="dev-name">…</span>
+    <code id="dev-fp"></code>
+    <span class="badge" id="dev-cipher"></span>
+  </div>
+  <div class="top-actions">
+    <button class="btn ghost" id="btn-recv-code" title="Let an unpaired machine send to you once">Receive with code</button>
+    <button class="btn ghost" id="btn-pair-code">Pair a device</button>
+    <button class="btn icon" id="btn-settings" title="Settings" aria-label="Settings">
+      <svg viewBox="0 0 24 24"><path d="M12 15.5a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7Z"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1Z"/></svg>
+    </button>
+  </div>
+</header>
+
+<main class="grid">
+  <section class="col">
+    <div class="card">
+      <div class="card-head">
+        <h2>Peers</h2>
+        <span class="muted small" id="peer-count"></span>
+      </div>
+      <ul class="peers" id="peers"></ul>
+      <div class="manual-peer">
+        <input id="manual-host" placeholder="host:port (internet / no discovery)" spellcheck="false">
+        <button class="btn ghost small" id="btn-manual-pair">Pair</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-head">
+        <h2>Send</h2>
+        <label class="toggle small"><input type="checkbox" id="show-hidden"> hidden files</label>
+      </div>
+      <div class="pathbar">
+        <button class="btn icon small" id="btn-up" title="Parent folder" aria-label="Parent folder">
+          <svg viewBox="0 0 24 24"><path d="M12 19V5M5 12l7-7 7 7"/></svg>
+        </button>
+        <input id="path" spellcheck="false" aria-label="Folder path">
+      </div>
+      <div class="files" id="files" role="listbox" aria-multiselectable="true"></div>
+      <div class="selected" id="selected"></div>
+      <div class="send-form">
+        <label>To
+          <select id="target"></select>
+        </label>
+        <label>Streams
+          <input type="number" id="streams" min="1" max="32">
+        </label>
+        <label>Compression
+          <select id="compress">
+            <option value="auto">auto</option>
+            <option value="off">off</option>
+            <option value="1">zstd 1</option>
+            <option value="3">zstd 3</option>
+            <option value="9">zstd 9</option>
+            <option value="19">zstd 19</option>
+          </select>
+        </label>
+        <label class="code-field">One-shot code <span class="muted">(unpaired)</span>
+          <input id="send-code" placeholder="optional" spellcheck="false">
+        </label>
+      </div>
+      <div class="send-actions">
+        <button class="btn ghost" id="btn-bench" title="Measure raw link speed without touching the disk">Benchmark link</button>
+        <button class="btn primary" id="btn-send" disabled>Send</button>
+      </div>
+    </div>
+  </section>
+
+  <section class="col wide">
+    <div class="card chart-card">
+      <div class="card-head">
+        <h2>Throughput</h2>
+        <div class="legend">
+          <span class="key out"></span>sending <b id="rate-out">0</b>
+          <span class="key in"></span>receiving <b id="rate-in">0</b>
+        </div>
+      </div>
+      <canvas id="chart" height="180" aria-label="Throughput over the last minute"></canvas>
+    </div>
+
+    <div class="card">
+      <div class="card-head"><h2>Transfers</h2></div>
+      <div id="transfers" class="transfers"></div>
+    </div>
+
+    <div class="card">
+      <div class="card-head"><h2>History</h2></div>
+      <div class="table-wrap">
+        <table class="history">
+          <thead><tr><th></th><th>What</th><th>Peer</th><th class="num">Size</th><th class="num">Avg speed</th><th>When</th><th>Result</th></tr></thead>
+          <tbody id="history"></tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+</main>
+
+<dialog id="dlg-code" class="dialog">
+  <h3 id="code-title"></h3>
+  <p class="muted" id="code-help"></p>
+  <div class="bigcode" id="code-value"></div>
+  <p class="cmd"><code id="code-cmd"></code></p>
+  <div class="countdown"><div class="bar" id="code-bar"></div></div>
+  <p class="muted small" id="code-status"></p>
+  <div class="dialog-actions"><button class="btn" data-close>Close</button></div>
+</dialog>
+
+<dialog id="dlg-join" class="dialog">
+  <h3>Pair with <span id="join-name"></span></h3>
+  <p class="muted">Run <code>beam pair</code> (or “Pair a device”) on that machine and enter the code it shows.</p>
+  <input id="join-code" class="code-input" placeholder="0000-0000-0000" autocomplete="off" spellcheck="false">
+  <p class="error small" id="join-error"></p>
+  <div class="dialog-actions">
+    <button class="btn ghost" data-close>Cancel</button>
+    <button class="btn primary" id="btn-join">Pair</button>
+  </div>
+</dialog>
+
+<dialog id="dlg-settings" class="dialog">
+  <h3>Settings</h3>
+  <div class="form">
+    <label>Device name <input id="set-name"></label>
+    <label>Download folder <input id="set-dir" spellcheck="false"></label>
+    <label>Default streams <input type="number" id="set-streams" min="1" max="32"></label>
+    <label>Default compression
+      <select id="set-compress">
+        <option value="auto">auto</option><option value="off">off</option>
+        <option value="1">zstd 1</option><option value="3">zstd 3</option><option value="9">zstd 9</option>
+      </select>
+    </label>
+    <label class="toggle"><input type="checkbox" id="set-auto"> Accept transfers from paired devices automatically</label>
+  </div>
+  <div class="ifaces" id="ifaces"></div>
+  <p class="error small" id="set-error"></p>
+  <div class="dialog-actions">
+    <button class="btn ghost" data-close>Cancel</button>
+    <button class="btn primary" id="btn-save-settings">Save</button>
+  </div>
+</dialog>
+
+<div class="locked" id="locked" hidden>
+  <div class="card">
+    <h2>Open beam from your terminal</h2>
+    <p>The web UI needs the access token that only your user account can read. Run:</p>
+    <pre><code>beam ui</code></pre>
+    <p class="muted small">It opens this page with the token attached. This keeps other websites from controlling beam.</p>
+  </div>
+</div>
+
+<div class="toasts" id="toasts" aria-live="polite"></div>
+</body>
+</html>
