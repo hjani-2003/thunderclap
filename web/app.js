@@ -57,6 +57,7 @@ function fmtRate(bps) {
 
 function fmtDur(s) {
   if (s == null || s < 0 || !isFinite(s)) return '—';
+  if (s < 10) return s.toFixed(1) + 's';
   s = Math.round(s);
   if (s >= 3600) return `${Math.floor(s / 3600)}h ${String(Math.floor(s / 60) % 60).padStart(2, '0')}m`;
   if (s >= 60) return `${Math.floor(s / 60)}m ${String(s % 60).padStart(2, '0')}s`;
@@ -352,7 +353,7 @@ function renderTransfers() {
     stat(final ? 'avg' : 'speed', fmtRate(t.rate));
     if (!final && t.eta >= 0) stat(t.bench ? 'left' : 'ETA', fmtDur(t.eta));
     if (final) stat('took', fmtDur(t.elapsed));
-    if (t.ratio > 0 && t.ratio < 0.97) stat('zstd', Math.round((1 - t.ratio) * 100) + '% smaller');
+    if (t.ratio > 0 && t.ratio < 0.97) stat('zstd', Math.min(99, Math.floor((1 - t.ratio) * 100)) + '% smaller');
     if (t.resumed) stat('resumed', fmtBytes(t.skipped));
     stat('streams', t.streams);
     el.stats.replaceChildren(...parts);

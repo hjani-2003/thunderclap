@@ -173,7 +173,7 @@ label.toggle input { width: auto; }
 
 /* ---- transfers ---- */
 .transfers { display: flex; flex-direction: column; gap: 10px; }
-.xfer { border: 1px solid var(--border); border-radius: 10px; padding: 12px; background: var(--surface-2); }
+.xfer { border: 1px solid var(--border); border-radius: 10px; padding: 12px; background: var(--surface-2); min-width: 0; }
 .xfer-top { display: flex; align-items: center; gap: 10px; }
 .xdir { width: 26px; height: 26px; border-radius: 8px; display: grid; place-items: center; flex: none; font-weight: 700; }
 .xdir.out { background: color-mix(in srgb, var(--out) 16%, transparent); color: var(--out); }
@@ -194,7 +194,7 @@ label.toggle input { width: auto; }
 .xfer.failed .progress .fill, .xfer.cancelled .progress .fill, .xfer.rejected .progress .fill { background: var(--err); opacity: 0.6; }
 .stats { display: flex; flex-wrap: wrap; gap: 4px 18px; font-size: 12px; color: var(--muted); font-variant-numeric: tabular-nums; }
 .stats b { color: var(--text); font-weight: 600; }
-.xfer .err { color: var(--err); font-size: 12px; margin-top: 6px; }
+.xfer .err { color: var(--err); font-size: 12px; margin-top: 6px; overflow-wrap: anywhere; }
 .xfer-actions { display: flex; gap: 6px; }
 .spark { width: 100%; height: 34px; display: block; margin-top: 8px; }
 
@@ -240,6 +240,7 @@ table.history { width: 100%; border-collapse: collapse; font-size: 13px; }
 .toast {
   background: var(--surface); border: 1px solid var(--border); border-left: 3px solid var(--accent);
   border-radius: 10px; padding: 10px 14px; box-shadow: var(--shadow); max-width: 380px; animation: slide 0.2s ease-out;
+  overflow-wrap: anywhere;
 }
 .toast.err { border-left-color: var(--err); }
 .toast.ok { border-left-color: var(--ok); }

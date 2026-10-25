@@ -36,6 +36,12 @@ test: $(TESTS:tests/unit/test_%.c=build/test_%) beam
 e2e: beam
 	tests/e2e.sh
 
+# User guide PDF (needs Node.js 22+ and Google Chrome or Chromium).
+docs: docs/beam-user-guide.pdf
+
+docs/beam-user-guide.pdf: docs/guide/guide.html docs/guide/guide.css $(wildcard docs/img/*.png) docs/tools/build-pdf.mjs docs/tools/cdp.mjs
+	node docs/tools/build-pdf.mjs docs/guide/guide.html $@
+
 install: beam
 	install -Dm755 beam $(PREFIX)/bin/beam
 	install -Dm644 systemd/beam.service $(HOME)/.config/systemd/user/beam.service
@@ -45,4 +51,4 @@ install: beam
 clean:
 	rm -rf build beam
 
-.PHONY: all test e2e install clean
+.PHONY: all test e2e docs install clean

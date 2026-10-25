@@ -17,6 +17,8 @@ Use it from the terminal (`beam send …`) or from a live web dashboard on `http
 - **Resumable.** If a transfer dies (network drop, crash, Ctrl-C), run the same `beam send` again. Only the missing chunks are sent.
 - **Zero config on a LAN.** Daemons find each other with UDP broadcast and multicast beacons. Each peer is shown with the interface and link speed it is reachable on, and the fastest interface wins.
 
+📖 **[User guide (PDF)](docs/beam-user-guide.pdf)** covers installation, pairing, the CLI, the web dashboard, speed tuning, resuming, security, configuration and troubleshooting. Screenshots are included.
+
 ## Install
 
 ```bash
@@ -151,6 +153,7 @@ The UI is served only on `127.0.0.1`. Every API call needs the token in `~/.conf
 make test    # unit tests: CPace / KK / AEAD tamper & replay, manifest safety, chunk layout, journal, compression
 make e2e     # two daemons on localhost: pairing, files, trees, name clashes, unpaired refusal,
              # one-shot codes, kill -9 mid-transfer + resume, web auth, bench
+make docs    # rebuild docs/beam-user-guide.pdf from docs/guide/ (needs Node.js 22+ and Chrome/Chromium)
 ```
 
 ## Performance notes

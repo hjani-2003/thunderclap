@@ -1,0 +1,754 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>beam — User Guide</title>
+<link rel="stylesheet" href="guide.css">
+<link rel="stylesheet" href="../img/ui-overview-pins.css">
+</head>
+<body>
+
+<!-- ======================= COVER ======================= -->
+<section class="cover">
+  <svg class="mark" viewBox="0 0 32 32" aria-hidden="true">
+    <path d="M4 22 L16 6 L28 22" stroke="#22d3ee"/>
+    <path d="M10 26 L16 18 L22 26" stroke="#a78bfa"/>
+  </svg>
+  <h1>beam</h1>
+  <div class="subtitle">User Guide · version 0.1.0</div>
+  <p class="lede">Fast, encrypted file and folder transfer between Linux machines. Use it from the terminal
+    when you want speed and simplicity, or from a live dashboard in your browser when you want to see what is
+    happening.</p>
+  <div class="pills">
+    <span class="pill">Parallel TCP streams</span>
+    <span class="pill">AES-256-GCM / ChaCha20-Poly1305</span>
+    <span class="pill">PAKE pairing codes</span>
+    <span class="pill">Adaptive zstd</span>
+    <span class="pill">Resumable</span>
+    <span class="pill">LAN discovery</span>
+    <span class="pill">CLI + web UI</span>
+  </div>
+  <svg class="beams" viewBox="0 0 400 260" aria-hidden="true">
+    <defs>
+      <linearGradient id="g1" x1="0" x2="1"><stop offset="0" stop-color="#22d3ee" stop-opacity="0"/><stop offset="1" stop-color="#22d3ee" stop-opacity="0.9"/></linearGradient>
+      <linearGradient id="g2" x1="0" x2="1"><stop offset="0" stop-color="#a78bfa" stop-opacity="0"/><stop offset="1" stop-color="#a78bfa" stop-opacity="0.8"/></linearGradient>
+    </defs>
+    <g stroke-linecap="round" stroke-width="3" fill="none">
+      <path d="M0 60 C 140 60, 220 120, 400 120" stroke="url(#g1)"/>
+      <path d="M0 95 C 140 95, 220 135, 400 135" stroke="url(#g2)"/>
+      <path d="M0 130 C 140 130, 220 150, 400 150" stroke="url(#g1)"/>
+      <path d="M0 165 C 140 165, 220 165, 400 165" stroke="url(#g2)"/>
+      <path d="M0 200 C 140 200, 220 180, 400 180" stroke="url(#g1)"/>
+      <path d="M0 235 C 140 235, 220 195, 400 195" stroke="url(#g2)"/>
+    </g>
+  </svg>
+  <div class="meta"><span>For Linux · written in C</span><span>October 2026</span></div>
+</section>
+
+<!-- ======================= TOC ======================= -->
+<section class="toc">
+  <h1>Contents</h1>
+  <ol>
+    <li><a href="#intro"><span class="tn">1</span>Introduction</a><span class="desc">What beam is, what it does, and the few ideas you need to know</span></li>
+    <li><a href="#install"><span class="tn">2</span>Installation</a><span class="desc">Dependencies, building, starting at login, firewall</span></li>
+    <li><a href="#quick"><span class="tn">3</span>Quick start</a><span class="desc">Pair two machines and send your first folder in five minutes</span></li>
+    <li><a href="#pairing"><span class="tn">4</span>Pairing and trust</a><span class="desc">Pairing codes, one-shot codes, the internet, forgetting a device</span></li>
+    <li><a href="#cli"><span class="tn">5</span>Using the terminal</a><span class="desc">Sending, receiving, following, cancelling and resuming transfers</span></li>
+    <li><a href="#web"><span class="tn">6</span>Using the web dashboard</a><span class="desc">A tour of the browser interface</span></li>
+    <li><a href="#speed"><span class="tn">7</span>Getting the most speed</a><span class="desc">Benchmarking, streams, compression, cables and disks</span></li>
+    <li><a href="#reliability"><span class="tn">8</span>Reliability and resuming</a><span class="desc">What happens when things go wrong, and how beam recovers</span></li>
+    <li><a href="#security"><span class="tn">9</span>Security</a><span class="desc">How devices are authenticated and data is protected</span></li>
+    <li><a href="#config"><span class="tn">10</span>Configuration reference</a><span class="desc">Settings, files, ports and environment variables</span></li>
+    <li><a href="#trouble"><span class="tn">11</span>Troubleshooting and FAQ</a><span class="desc">Error messages explained, common questions</span></li>
+    <li><a href="#reference"><span class="tn">12</span>Command reference</a><span class="desc">Every command and option on one page</span></li>
+    <li><a href="#dev"><span class="tn">13</span>For developers</a><span class="desc">Project layout, tests, rebuilding this guide</span></li>
+  </ol>
+</section>
+
+<!-- ======================= 1 INTRO ======================= -->
+<h1 class="chapter" id="intro"><span class="num">1</span>Introduction</h1>
+<p class="chapter-intro">beam moves files and folders between two Linux computers as fast as the connection between them
+allows: a single 1 GB video, a photo library, or a source tree with a hundred thousand tiny files.</p>
+
+<div class="feature-grid">
+  <div class="feature"><h4><span class="dot"></span>Fast</h4><p>Splits data into 4 MiB chunks and sends them over several TCP connections at once (8 by default). Small files are packed together so thousands of them don't cost thousands of round trips.</p></div>
+  <div class="feature"><h4><span class="dot"></span>Private</h4><p>Everything is encrypted and authenticated. Machines prove who they are with keys exchanged once during pairing, so only your devices can send to you.</p></div>
+  <div class="feature"><h4><span class="dot"></span>Smart compression</h4><p>Text, logs and databases are compressed with zstd on the fly; videos, archives and ISOs are detected as incompressible and sent as-is at full speed.</p></div>
+  <div class="feature"><h4><span class="dot"></span>Resumable</h4><p>If the network drops, a machine crashes or you press Ctrl-C, just run the same command again — only the missing pieces are sent.</p></div>
+  <div class="feature"><h4><span class="dot"></span>Zero setup on a LAN</h4><p>beam finds other beam machines on your network automatically and shows which network interface and link speed each one is reachable on.</p></div>
+  <div class="feature"><h4><span class="dot"></span>Two interfaces</h4><p>A terminal command for speed and scripts, and a browser dashboard with a file picker, live throughput graphs and history.</p></div>
+</div>
+
+<h2>How it fits together</h2>
+<p>Each computer runs a small background program, the <strong>daemon</strong>. The daemons talk to each other over the
+network. You talk to <em>your</em> daemon either with the <code>beam</code> command or through the web dashboard — both are
+just remote controls for the same daemon. You never need to start the daemon by hand: any <code>beam</code> command starts it
+if it isn't running.</p>
+
+<div class="diagram">
+<svg viewBox="0 0 680 230">
+  <defs><marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10z" fill="#475569"/></marker></defs>
+  <rect x="8" y="10" width="300" height="210" rx="12" fill="#f3f6fa" stroke="#dde3ec"/>
+  <text x="22" y="34" font-size="12" font-weight="700" fill="#0891b2">YOUR LAPTOP</text>
+  <rect x="372" y="10" width="300" height="210" rx="12" fill="#f5f3ff" stroke="#e4defc"/>
+  <text x="386" y="34" font-size="12" font-weight="700" fill="#7c3aed">YOUR DESKTOP</text>
+
+  <rect x="24" y="52" width="104" height="44" rx="8" fill="#fff" stroke="#cbd5e1"/>
+  <text x="76" y="72" text-anchor="middle" font-size="12" font-weight="600">beam</text>
+  <text x="76" y="87" text-anchor="middle" font-size="9.5" fill="#5b6577">command line</text>
+  <rect x="24" y="150" width="104" height="44" rx="8" fill="#fff" stroke="#cbd5e1"/>
+  <text x="76" y="170" text-anchor="middle" font-size="12" font-weight="600">browser</text>
+  <text x="76" y="185" text-anchor="middle" font-size="9.5" fill="#5b6577">127.0.0.1:8080</text>
+
+  <rect x="186" y="80" width="108" height="86" rx="10" fill="#0891b2"/>
+  <text x="240" y="113" text-anchor="middle" font-size="13" font-weight="700" fill="#fff">daemon</text>
+  <text x="240" y="130" text-anchor="middle" font-size="9.5" fill="#e0f4f8">discovery · transfers</text>
+  <text x="240" y="144" text-anchor="middle" font-size="9.5" fill="#e0f4f8">web server</text>
+
+  <rect x="386" y="80" width="108" height="86" rx="10" fill="#7c3aed"/>
+  <text x="440" y="113" text-anchor="middle" font-size="13" font-weight="700" fill="#fff">daemon</text>
+  <text x="440" y="130" text-anchor="middle" font-size="9.5" fill="#ede9fe">receives into</text>
+  <text x="440" y="144" text-anchor="middle" font-size="9.5" fill="#ede9fe">~/Downloads/beam</text>
+  <rect x="546" y="100" width="110" height="46" rx="8" fill="#fff" stroke="#cbd5e1"/>
+  <text x="601" y="121" text-anchor="middle" font-size="11" font-weight="600">beam / browser</text>
+  <text x="601" y="136" text-anchor="middle" font-size="9.5" fill="#5b6577">same tools here</text>
+
+  <path d="M128 74 L184 98" stroke="#475569" stroke-width="1.5" fill="none" marker-end="url(#ar)"/>
+  <path d="M128 172 L184 150" stroke="#475569" stroke-width="1.5" fill="none" marker-end="url(#ar)"/>
+  <path d="M544 123 L496 123" stroke="#475569" stroke-width="1.5" fill="none" marker-end="url(#ar)"/>
+  <g stroke-width="2.2" fill="none">
+    <path d="M296 100 L384 100" stroke="#0891b2"/>
+    <path d="M296 112 L384 112" stroke="#22b3cf"/>
+    <path d="M296 124 L384 124" stroke="#0891b2"/>
+    <path d="M296 136 L384 136" stroke="#22b3cf"/>
+  </g>
+  <path d="M296 156 L384 156" stroke="#94a3b8" stroke-width="1.4" stroke-dasharray="4 4" fill="none"/>
+  <text x="340" y="88" text-anchor="middle" font-size="9.5" font-weight="600" fill="#0f172a">encrypted TCP ×N</text>
+  <text x="340" y="172" text-anchor="middle" font-size="9" fill="#5b6577">UDP discovery</text>
+  <text x="150" y="122" text-anchor="middle" font-size="9" fill="#5b6577">local</text>
+  <text x="150" y="133" text-anchor="middle" font-size="9" fill="#5b6577">only</text>
+</svg>
+</div>
+
+<h2>Words used in this guide</h2>
+<dl class="kv">
+  <dt>Daemon</dt><dd>The background program on each machine that does the actual work. Started automatically.</dd>
+  <dt>Peer</dt><dd>Another computer running beam.</dd>
+  <dt>Pairing</dt><dd>A one-time introduction between two of your machines using a short code. Afterwards they recognise each other forever (until you unpair).</dd>
+  <dt>One-shot code</dt><dd>A code that lets an <em>unpaired</em> machine send you files exactly once — handy for a friend's laptop.</dd>
+  <dt>Fingerprint</dt><dd>A 16-character identifier of a machine's key, like <code>a786fdb2645b25f1</code>. Shown everywhere so you can tell devices apart.</dd>
+  <dt>Transfer</dt><dd>One send operation (any number of files and folders). Each has a small number, its <em>id</em>, used by commands like <code>beam cancel 3</code>.</dd>
+  <dt>Download folder</dt><dd>Where received files go: <code>~/Downloads/beam</code> unless you change it.</dd>
+</dl>
+
+<!-- ======================= 2 INSTALL ======================= -->
+<h1 class="chapter" id="install"><span class="num">2</span>Installation</h1>
+<p class="chapter-intro">beam is built from source. It takes about a minute and needs to be done on every machine you want to use.</p>
+
+<h2>Requirements</h2>
+<ul>
+  <li>A Linux distribution (developed on Ubuntu; any modern distribution works).</li>
+  <li>GCC 15 or newer, or Clang 19 or newer — the web dashboard is compiled into the program with the C23 <code>#embed</code> feature.</li>
+  <li>Four small libraries: <strong>libsodium</strong> (encryption), <strong>zstd</strong> (compression), <strong>xxHash</strong> (checksums) and <strong>cJSON</strong>.</li>
+</ul>
+
+<h2>Build and install</h2>
+<div class="term"><div class="bar"><i></i><i></i><i></i><span>terminal</span></div><pre><span class="c"># 1. Install the build tools and libraries (Debian / Ubuntu)</span>
+<span class="p">$ </span>sudo apt install build-essential pkg-config libsodium-dev libzstd-dev libxxhash-dev libcjson-dev
+
+<span class="c"># 2. Get the code and build it</span>
+<span class="p">$ </span>git clone https://github.com/&lt;you&gt;/beam.git
+<span class="p">$ </span>cd beam
+<span class="p">$ </span>make
+
+<span class="c"># 3. Install into ~/.local/bin (no root needed)</span>
+<span class="p">$ </span>make install
+<span class="o">installed to /home/you/.local/bin/beam
+enable at login with: systemctl --user enable --now beam</span></pre></div>
+
+<div class="note"><b class="label">Fedora / Arch</b>
+<p>Package names differ slightly: Fedora uses <code>libsodium-devel libzstd-devel xxhash-devel cjson-devel</code>;
+Arch uses <code>libsodium zstd xxhash cjson</code>.</p></div>
+
+<p>Make sure <code>~/.local/bin</code> is on your <code>PATH</code> (it is by default on Ubuntu after you log in again). Check the install:</p>
+<div class="term"><div class="bar"><i></i><i></i><i></i><span>terminal</span></div><pre><span class="p">$ </span>beam --version
+<span class="o">0.1.0</span></pre></div>
+
+<h2>Start beam automatically (optional)</h2>
+<p>Any <code>beam</code> command starts the daemon when needed, but a machine can only <em>receive</em> while its daemon is running.
+On a computer that should always be ready to receive — a desktop or home server — let systemd start it when you log in:</p>
+<div class="term"><div class="bar"><i></i><i></i><i></i><span>terminal</span></div><pre><span class="p">$ </span>systemctl --user enable --now beam
+<span class="c"># optional: keep it running even when you are logged out</span>
+<span class="p">$ </span>sudo loginctl enable-linger $USER</pre></div>
+
+<h2>Open the firewall</h2>
+<p>If a firewall is active (Ubuntu ships <code>ufw</code>), allow beam's two ports on <strong>every</strong> machine that should receive or be discovered:</p>
+<div class="term"><div class="bar"><i></i><i></i><i></i><span>terminal</span></div><pre><span class="p">$ </span>sudo ufw allow 7878/tcp   <span class="c"># transfers</span>
+<span class="p">$ </span>sudo ufw allow 7879/udp   <span class="c"># finding each other on the LAN</span></pre></div>
+
+<h2>Uninstall</h2>
+<div class="term"><div class="bar"><i></i><i></i><i></i><span>terminal</span></div><pre><span class="p">$ </span>beam stop
+<span class="p">$ </span>systemctl --user disable beam; rm ~/.config/systemd/user/beam.service
+<span class="p">$ </span>rm ~/.local/bin/beam
+<span class="p">$ </span>rm -rf ~/.config/beam      <span class="c"># removes keys, pairings and history</span></pre></div>
+
+<!-- ======================= 3 QUICK START ======================= -->
+<h1 class="chapter" id="quick"><span class="num">3</span>Quick start</h1>
+<p class="chapter-intro">Two machines on the same network: a <span class="where a">laptop</span> that sends and a <span class="where b">desktop</span> that receives.
+beam is installed on both (chapter 2).</p>
+
+<ol class="steps">
+  <li><b>Check that the machines see each other <span class="where a">laptop</span></b>
+  <p>The first command starts the daemon. After a couple of seconds the other machine appears under “On this network”.</p>
+  <div class="term"><div class="bar"><i></i><i></i><i></i><span>laptop</span></div><pre><span class="p">$ </span>beam peers
+<span class="o">Paired:
+  (none — pair with `beam pair`)
+
+On this network:
+  desktop              cafb151299672aaa  192.168.1.7:7878  via wlp1s0 (Wi-Fi)</span></pre></div>
+  <p class="small">Nothing listed? Run any beam command on the desktop too (e.g. <code>beam status</code>) so its daemon starts, and check the firewall (chapter 2).</p></li>
+
+  <li><b>Show a pairing code <span class="where b">desktop</span></b>
+  <div class="term"><div class="bar"><i></i><i></i><i></i><span>desktop</span></div><pre><span class="p">$ </span>beam pair
+<span class="o">Pairing code:  <span class="y">3704-9640-4439</span>
+
+On the other machine run:
+  beam pair desktop 3704-9640-4439
+
+(valid for 5 minutes, one attempt)</span></pre></div></li>
+
+  <li><b>Enter the code <span class="where a">laptop</span></b>
+  <div class="term"><div class="bar"><i></i><i></i><i></i><span>laptop</span></div><pre><span class="p">$ </span>beam pair desktop 3704-9640-4439
+<span class="g">✓ paired with desktop (cafb151299672aaa)</span></pre></div>
+  <p>The desktop's terminal confirms with <code>✓ paired with laptop</code>. You never need to do this again for these two machines.</p></li>
+
+  <li><b>Send something <span class="where a">laptop</span></b>
+  <div class="term"><div class="bar"><i></i><i></i><i></i><span>laptop</span></div><pre><span class="p">$ </span>beam send ~/Videos/trip ~/project --to desktop
+<span class="o">[████████████████░░░░░░░░░░░░░░]  54.2%  610 MiB / 1.1 GiB  8.15 Gbit/s  ETA 0:01</span>
+<span class="g">✓ sent to desktop (1.1 GiB, 1502 files) in 1.1s — 8.20 Gbit/s avg</span></pre></div>
+  <p>The files appear on the desktop in <code>~/Downloads/beam/trip</code> and <code>~/Downloads/beam/project</code>, with their permissions and modification times preserved.</p></li>
+
+  <li><b>Open the dashboard <span class="where any">either</span></b>
+  <div class="term"><div class="bar"><i></i><i></i><i></i><span>terminal</span></div><pre><span class="p">$ </span>beam ui</pre></div>
+  <p>Your browser opens on <code>http://127.0.0.1:8080</code> with live graphs, a file picker and history (chapter 6).</p></li>
+</ol>
+
+<div class="tip"><b class="label">Both directions</b><p>Pairing works both ways. The desktop can now also run <code>beam send … --to laptop</code>.</p></div>
+
+<!-- ======================= 4 PAIRING ======================= -->
+<h1 class="chapter" id="pairing"><span class="num">4</span>Pairing and trust</h1>
+<p class="chapter-intro">beam only accepts transfers from machines it knows. There are two ways to become known:
+pairing (permanent) and one-shot codes (single use).</p>
+
+<h2>Pairing two of your machines</h2>
+<p>Run <code>beam pair</code> on one machine to show a code, then <code>beam pair &lt;name&gt; &lt;code&gt;</code> on the other, as in the
+quick start. Rules worth knowing:</p>
+<ul>
+  <li>A code is valid for <strong>5 minutes</strong> and allows <strong>one attempt</strong>. A wrong entry uses it up — just run <code>beam pair</code> again.</li>
+  <li><code>&lt;name&gt;</code> can be the device name shown by <code>beam peers</code>, a fingerprint prefix, or an address like <code>192.168.1.20</code> or <code>myserver.example.com:7878</code>.</li>
+  <li>Separators in the code don't matter: <code>3704 9640 4439</code> and <code>370496404439</code> work too.</li>
+  <li>The code never crosses the network. Even someone recording your traffic cannot work it out afterwards
+  (the technique is called a PAKE — see chapter 9).</li>
+</ul>
+
+<h2>One-shot codes for machines you don't own</h2>
+<p>To receive files from a friend's computer without pairing it permanently, ask for a one-shot code on the receiving side:</p>
+<div class="term"><div class="bar"><i></i><i></i><i></i><span>desktop (receiver)</span></div><pre><span class="p">$ </span>beam recv --code
+<span class="o">One-shot code:  <span class="y">0271-5949-4950</span>
+
+On the sending machine run:
+  beam send &lt;files&gt; --to desktop --code 0271-5949-4950
+
+Waiting for the transfer… (Ctrl-C to stop waiting)
+Receiving server.log from laptop</span>
+<span class="g">✓ received from laptop (300.0 MiB, 1 files) in 0.3s — 8.33 Gbit/s avg, compressed</span>
+<span class="o">  saved to ~/Downloads/beam/server.log</span></pre></div>
+<div class="term"><div class="bar"><i></i><i></i><i></i><span>friend's laptop (sender)</span></div><pre><span class="p">$ </span>beam send server.log --to desktop --code 0271-5949-4950
+<span class="g">✓ sent to desktop (300.0 MiB, 1 files) in 0.3s — 8.43 Gbit/s avg, compressed</span></pre></div>
+<p>The code is valid for <strong>10 minutes</strong>, for <strong>one</strong> transfer, and leaves no permanent trust behind.
+In the dashboard, the same thing is the <em>Receive with code</em> button.</p>
+
+<h2>Sending over the internet</h2>
+<p>Automatic discovery only works on the local network, but pairing and transfers work anywhere:</p>
+<ol>
+  <li>On the receiver's router, forward <strong>TCP port 7878</strong> to the receiving computer.</li>
+  <li>Pair using the public address: <code>beam pair home.example.com:7878 &lt;code&gt;</code>
+  (you can pair on the LAN first, then travel — the pairing stays valid).</li>
+  <li>Send with the address: <code>beam send big.iso --to home.example.com:7878</code>.
+  For paired devices, beam also remembers the last address it reached them on.</li>
+</ol>
+<div class="tip"><b class="label">Tip</b><p>Over long distances, more parallel streams help: try <code>--streams 16</code>.</p></div>
+
+<h2>Seeing and removing paired devices</h2>
+<div class="term"><div class="bar"><i></i><i></i><i></i><span>laptop</span></div><pre><span class="p">$ </span>beam peers
+<span class="o">Paired:
+  desktop              cafb151299672aaa  192.168.1.7:7880  online
+
+On this network:
+  desktop              cafb151299672aaa  192.168.1.7:7880  via wlp1s0 (Wi-Fi)  [paired]</span>
+<span class="p">$ </span>beam unpair desktop
+<span class="o">forgot desktop</span></pre></div>
+<p>Unpairing only changes the machine you run it on: the laptop now refuses transfers from the desktop and can no longer send
+to it, but the desktop still lists the laptop until you run <code>beam unpair laptop</code> there too.</p>
+
+<!-- ======================= 5 CLI ======================= -->
+<h1 class="chapter" id="cli"><span class="num">5</span>Using the terminal</h1>
+<p class="chapter-intro">Everything beam can do is available as a <code>beam</code> sub-command. This chapter covers daily use;
+chapter 12 lists every option.</p>
+
+<h2>Sending</h2>
+<pre><span class="p">$ </span>beam send &lt;file or folder&gt;... --to &lt;peer&gt; [options]</pre>
+<ul>
+  <li>Send any mix of files and folders in one go. Folders are sent with everything inside them, including empty folders and symbolic links.</li>
+  <li><code>--to</code> takes a device name, a fingerprint prefix, or <code>host[:port]</code>.</li>
+  <li>The progress bar shows percentage, amount, current speed, time left and — when compression is helping — how much smaller the data got.</li>
+  <li>Press <kbd>Ctrl-C</kbd> to cancel. Running the same command later <strong>resumes</strong> where it stopped (chapter 8).</li>
+</ul>
+
+<table>
+  <thead><tr><th>Option</th><th>Meaning</th></tr></thead>
+  <tbody>
+    <tr><td class="k"><code>--streams N</code></td><td>Number of parallel connections (1–32). Default: the number of CPU cores, between 2 and 8.</td></tr>
+    <tr><td class="k"><code>--compress MODE</code></td><td><code>auto</code> (default) compresses only data that benefits; <code>off</code> never compresses; <code>1</code>–<code>19</code> forces that zstd level (higher = smaller but slower).</td></tr>
+    <tr><td class="k"><code>--code CODE</code></td><td>Send to an unpaired machine using a one-shot code it gave you.</td></tr>
+    <tr><td class="k"><code>--detach</code></td><td>Start the transfer in the background and return immediately.</td></tr>
+  </tbody>
+</table>
+
+<h2>Receiving</h2>
+<p>On a paired machine there is nothing to do: transfers are accepted automatically and saved into the download folder.
+Each top-level file or folder you send becomes an entry there:</p>
+<ul>
+  <li>Sending <code>~/Videos/trip</code> creates <code>~/Downloads/beam/trip/…</code></li>
+  <li>If something with that name already exists, beam never overwrites it — it picks a new name like <code>trip (1)</code> or <code>notes (1).txt</code>.</li>
+  <li>While a file is arriving it is called <code>name.beam-part</code>; it gets its real name, permissions and timestamp once complete.</li>
+</ul>
+
+<h3>Asking before accepting</h3>
+<p>If you'd rather approve each incoming transfer, turn off auto-accept on the receiving machine:</p>
+<div class="term"><div class="bar"><i></i><i></i><i></i><span>desktop</span></div><pre><span class="p">$ </span>beam config auto_accept off
+<span class="p">$ </span>beam ls
+<span class="o">  id  started         peer             what              size          speed       state
+   1  10-25 19:17  ← laptop           holiday      400.0 MiB   0.0%  0 kbit/s    waiting</span>
+<span class="p">$ </span>beam accept 1        <span class="c"># or: beam reject 1</span>
+<span class="g">✓ received from laptop (400.0 MiB, 1 files) in 1.4s — 8.99 Gbit/s avg</span>
+<span class="o">  saved to /home/you/Downloads/beam/holiday</span></pre></div>
+<p><code>beam accept</code> shows the progress bar until the transfer finishes. An unanswered request is declined after 10 minutes. The dashboard shows
+<em>Accept</em> / <em>Decline</em> buttons for waiting transfers.</p>
+
+<h2>Following transfers</h2>
+<div class="term"><div class="bar"><i></i><i></i><i></i><span>laptop</span></div><pre><span class="p">$ </span>beam send ~/Videos --to desktop --detach
+<span class="o">transfer 5 started — follow it with `beam watch 5`</span>
+<span class="p">$ </span>beam ls
+<span class="o">  id  started         peer             what                 size          speed          state
+   5  10-25 19:07  → desktop          Videos             1.1 GiB   5.8%  207.7 Mbit/s   active
+   4  10-25 19:07  → desktop          link benchmark         0 B   0.0%  24.20 Gbit/s   done
+   3  10-25 19:07  → desktop          server.log       300.0 MiB 100.0%  8.43 Gbit/s    done</span>
+<span class="p">$ </span>beam watch 5          <span class="c"># live progress bar; Ctrl-C here cancels the transfer</span>
+<span class="p">$ </span>beam cancel 5         <span class="c"># stop it without watching</span>
+<span class="p">$ </span>beam history          <span class="c"># the last 200 transfers, kept across restarts</span></pre></div>
+<p>Arrows show direction: <code>→</code> sent, <code>←</code> received.</p>
+
+<h2>Checking status and settings</h2>
+<div class="term"><div class="bar"><i></i><i></i><i></i><span>laptop</span></div><pre><span class="p">$ </span>beam status
+<span class="o">beam 0.1.0 — daemon running
+  device       laptop (a786fdb2645b25f1)
+  peer port    7878 (TCP), discovery UDP 7879
+  web UI       http://127.0.0.1:8080  (open with `beam ui`)
+  downloads    /home/you/Downloads/beam
+  auto-accept  on from paired peers
+  streams      8    compression auto    cipher AES-256-GCM
+  interface    wlp1s0     192.168.1.7     Wi-Fi</span>
+<span class="p">$ </span>beam config name "work-laptop"
+<span class="p">$ </span>beam config download_dir ~/Inbox
+<span class="p">$ </span>beam config compress off
+<span class="p">$ </span>beam stop             <span class="c"># stop the daemon (it restarts on the next beam command)</span></pre></div>
+
+<!-- ======================= 6 WEB ======================= -->
+<h1 class="chapter" id="web"><span class="num">6</span>Using the web dashboard</h1>
+<p class="chapter-intro">The dashboard does everything the terminal does, with a file picker and live visuals. It runs inside
+the daemon — there is no separate server to install.</p>
+
+<h2>Opening it</h2>
+<p>Run <code>beam ui</code>. It opens your browser on <code>http://127.0.0.1:8080</code> with a secret access token attached to
+the address. The token keeps other websites you visit from controlling beam, so open the dashboard with <code>beam ui</code>
+rather than typing the address. If you see “Open beam from your terminal”, that is why. The dashboard is only reachable
+from the same computer.</p>
+
+<figure>
+  <div class="annotated">
+  <img src="../img/ui-overview.png" alt="beam dashboard while sending a folder">
+  <span class="pin p1">1</span>
+  <span class="pin p2">2</span>
+  <span class="pin p3">3</span>
+  <span class="pin p4">4</span>
+  <span class="pin p5">5</span>
+  <span class="pin p6">6</span>
+  <span class="pin p7">7</span>
+  <span class="pin p8">8</span>
+  <span class="pin p9">9</span>
+  </div>
+  <figcaption><b>The dashboard during a transfer.</b> Numbers refer to the list below.</figcaption>
+</figure>
+
+<ul class="legend-list">
+  <li><span class="n">1</span><span><b>This device</b> — its name, fingerprint and the cipher in use. The dot is green while the page is connected to the daemon.</span></li>
+  <li><span class="n">2</span><span><b>Receive with code</b> and <b>Pair a device</b> show a code for the other machine; the gear opens Settings.</span></li>
+  <li><span class="n">3</span><span><b>Peers</b> — paired devices and new devices on the network, with address, interface and link speed. Click a paired device to make it the target; click <em>Pair</em> on a new one to enter its code. The box below pairs by address (internet).</span></li>
+  <li><span class="n">4</span><span><b>File picker</b> — type a folder path or use ↑. Click rows to select files and folders (double-click a folder to open it). Selections show as chips below.</span></li>
+  <li><span class="n">5</span><span><b>Options</b> — target device, number of streams, compression, and a one-shot code when sending to an unpaired device.</span></li>
+  <li><span class="n">6</span><span><b>Send</b> starts the transfer; <b>Benchmark link</b> runs a 10-second speed test to the target (chapter 7).</span></li>
+  <li><span class="n">7</span><span><b>Throughput</b> — total sending (cyan) and receiving (violet) speed over the last minute.</span></li>
+  <li><span class="n">8</span><span><b>Transfers</b> — one card per transfer with progress, speed, time left, compression savings and its own speed graph. Grey on the bar means data already present from an earlier attempt.</span></li>
+  <li><span class="n">9</span><span><b>State and actions</b> — Cancel, or Accept/Decline for incoming transfers waiting for approval. Errors appear in red under the card.</span></li>
+</ul>
+<p>Below the transfers, <strong>History</strong> lists past transfers with size, average speed, time and result. Notifications
+pop up in the bottom-right corner when a transfer finishes or fails.</p>
+
+<h2>Pairing from the browser</h2>
+<div class="two-up even">
+  <figure><img src="../img/ui-pair.png" alt="Pairing code dialog"><figcaption><b>Pair a device.</b> The code, the matching command for the other machine, and a countdown. The dialog closes by itself once pairing succeeds.</figcaption></figure>
+  <div>
+    <p>On the machine that <em>shows</em> the code, press <strong>Pair a device</strong>. On the other machine either run the
+    displayed <code>beam pair …</code> command or click <strong>Pair</strong> next to the device in the Peers list and type the code.</p>
+    <p><strong>Receive with code</strong> works the same way for one-shot transfers: give the code to the sender, who enters it
+    in the <em>One-shot code</em> field (5) or uses <code>--code</code>.</p>
+  </div>
+</div>
+
+<h2>Settings</h2>
+<div class="two-up even">
+  <figure><img src="../img/ui-settings.png" alt="Settings dialog"><figcaption><b>Settings.</b> Stored in <code>~/.config/beam/config.json</code>; the same as <code>beam config</code>.</figcaption></figure>
+  <div>
+    <ul>
+      <li><b>Device name</b> — how other machines see this one.</li>
+      <li><b>Download folder</b> — where received files go (an absolute path; created if missing).</li>
+      <li><b>Default streams</b> and <b>compression</b> — used when a send doesn't specify them.</li>
+      <li><b>Accept automatically</b> — turn off to approve each incoming transfer.</li>
+    </ul>
+    <p class="small">The bottom of the dialog lists the ports and the network interfaces with their link speed.</p>
+  </div>
+</div>
+
+<h2>Dark mode and phones</h2>
+<div class="two-up">
+  <figure><img src="../img/ui-dark.png" alt="Dashboard in dark mode"><figcaption><b>Dark theme</b>, chosen automatically from your system setting.</figcaption></figure>
+  <figure><img class="mobile-shot" src="../img/ui-mobile.png" alt="Dashboard at phone width"><figcaption><b>Narrow windows</b> stack the panels in one column.</figcaption></figure>
+</div>
+
+<!-- ======================= 7 SPEED ======================= -->
+<h1 class="chapter" id="speed"><span class="num">7</span>Getting the most speed</h1>
+<p class="chapter-intro">A transfer can never be faster than the slowest of three things: the network link, the disks at
+either end, and the CPU doing encryption and compression. beam is designed so the network or the disk is the limit.</p>
+
+<h2>Measure your link first</h2>
+<p><code>beam bench</code> sends encrypted data from memory to memory for a few seconds — no disks involved — and reports what
+the connection plus encryption can do:</p>
+<div class="term"><div class="bar"><i></i><i></i><i></i><span>laptop</span></div><pre><span class="p">$ </span>beam bench desktop --secs 10
+<span class="o">27.5 GiB  27.99 Gbit/s  0:01</span>
+<span class="o">link to desktop: 26.18 Gbit/s  (32.4 GiB in 10.6s over 8 streams)</span></pre></div>
+<p class="small">This example ran with both daemons on one computer, so no real network was involved; between two machines the
+result is limited by the link (about 0.94 Gbit/s on gigabit Ethernet).</p>
+<p>Compare the benchmark with a real transfer. If transfers are much slower than the benchmark, the disk (or many tiny files) is the
+bottleneck, not the network.</p>
+
+<h2>What to expect</h2>
+<table>
+  <thead><tr><th>Connection</th><th>Realistic ceiling</th><th>1 GB takes about</th></tr></thead>
+  <tbody>
+    <tr><td>Wi-Fi 5 / Wi-Fi 6</td><td>200 – 900 Mbit/s, varies a lot</td><td>10 – 40 s</td></tr>
+    <tr><td>Gigabit Ethernet</td><td>~940 Mbit/s</td><td>~9 s</td></tr>
+    <tr><td>2.5 GbE</td><td>~2.35 Gbit/s</td><td>~3.5 s</td></tr>
+    <tr><td>10 GbE</td><td>~9.4 Gbit/s (fast NVMe needed)</td><td>~1 s</td></tr>
+    <tr><td>USB4 / Thunderbolt networking</td><td>10 – 30 Gbit/s</td><td>under 1 s</td></tr>
+  </tbody>
+</table>
+<p class="small">For reference, on a single laptop (loopback, RAM disk) beam measured about 13 Gbit/s for a 1 GiB file,
+12 Gbit/s for a 20 000-file folder, and 22–25 Gbit/s in <code>beam bench</code>, with AES-256-GCM encryption on.</p>
+
+<h2>Use the fastest cable you have</h2>
+<ul>
+  <li><strong>Prefer Ethernet to Wi-Fi.</strong> When a peer is reachable over several interfaces, beam automatically uses the one with the highest link speed — <code>beam peers</code> shows which one.</li>
+  <li><strong>Direct cable.</strong> Two machines connected by one Ethernet cable work fine; give each port an address (most desktops do this automatically with link-local addresses).</li>
+  <li><strong>USB4 / Thunderbolt.</strong> Connecting two machines with a Thunderbolt cable creates a <code>thunderbolt0</code> network interface. beam uses it like any other network — this is the fastest option for laptops.</li>
+  <li><strong>Bluetooth is not supported</strong>: at about 2 Mbit/s in practice it is hundreds of times slower than Ethernet.</li>
+</ul>
+
+<h2>Tuning knobs</h2>
+<table>
+  <thead><tr><th>Situation</th><th>Try</th></tr></thead>
+  <tbody>
+    <tr><td>Internet or long-distance link</td><td><code>--streams 16</code> (or up to 32) to keep more data in flight.</td></tr>
+    <tr><td>Slow link, compressible data (logs, text, databases, VM images)</td><td><code>--compress 3</code> to <code>9</code>: smaller on the wire. <code>auto</code> already uses a fast level.</td></tr>
+    <tr><td>Very fast link, data known to be incompressible</td><td><code>--compress off</code> saves a little CPU (auto mode already skips incompressible chunks after a quick test).</td></tr>
+    <tr><td>Old CPU without AES-NI</td><td>Nothing to do: beam switches to ChaCha20-Poly1305 automatically, which is fast in software.</td></tr>
+    <tr><td>Hundreds of thousands of small files</td><td>Already handled: files under 1 MiB are bundled into 4 MiB chunks. The receiving disk's speed at creating files becomes the limit.</td></tr>
+  </tbody>
+</table>
+
+<!-- ======================= 8 RELIABILITY ======================= -->
+<h1 class="chapter" id="reliability"><span class="num">8</span>Reliability and resuming</h1>
+<p class="chapter-intro">Large transfers get interrupted: laptops sleep, Wi-Fi drops, someone presses Ctrl-C. beam is built so
+that starting again costs only the part that didn't arrive.</p>
+
+<h2>Resuming</h2>
+<p>To resume, <strong>run the same send again</strong> — same files, same destination device. beam recognises it and transfers
+only the missing chunks:</p>
+<div class="term"><div class="bar"><i></i><i></i><i></i><span>laptop</span></div><pre><span class="p">$ </span>beam send ~/Videos --to desktop
+<span class="o">[███░░░░░░░░░░░░░░░░░░░░░░░░░░░]   6.5%  73 MiB / 1.1 GiB  207.1 Mbit/s  ETA 0:41</span>
+<span class="o">^C</span>
+<span class="o">cancelling…</span>
+<span class="r">✗ cancelled: cancelled — send again to resume</span>
+<span class="p">$ </span>beam send ~/Videos --to desktop
+<span class="g">✓ sent to desktop (1.1 GiB, 2 files) in 0.8s — 11.38 Gbit/s avg, resumed</span></pre></div>
+<p>This works after any kind of interruption — a cancel on either side, a lost connection, or a crash or reboot of either
+machine. Good to know:</p>
+<ul>
+  <li>Resume works when the source files are <strong>unchanged</strong>. If a file was modified in the meantime, beam treats it as a new transfer and saves it next to the old one (e.g. <code>Videos (1)</code>).</li>
+  <li>The partly received data lives in the download folder as <code>*.beam-part</code> files plus a small progress journal in
+  <code>~/Downloads/beam/.beam/</code>. Deleting those simply means the next attempt starts from scratch; if you delete only some of the files, beam notices and re-sends what is missing.</li>
+  <li>Sending the same files again while that transfer is still running is refused with “this transfer is already running”.</li>
+</ul>
+
+<h2>How beam knows the data is correct</h2>
+<ul>
+  <li>Every record on the wire carries an authentication tag; any corruption or tampering in transit is detected and the connection is dropped.</li>
+  <li>Every chunk carries an XXH3 checksum of its original content, checked after decompression and before it is written. A chunk that fails is simply requested again.</li>
+  <li>At the end, the receiver confirms that every chunk is on disk before the sender reports success. Progress is only recorded after the data has been flushed to disk, so a power cut cannot leave beam believing it has data it doesn't.</li>
+  <li>Files keep their permissions, modification times and symbolic links; empty files and folders are recreated.</li>
+</ul>
+
+<h2>When something goes wrong</h2>
+<p>Errors are reported on both sides in plain language, for example:</p>
+<pre><span class="r">✗ failed: receiver: cannot write /home/you/Downloads/beam/Videos/day1.mp4: No space left on device</span></pre>
+<p>Fix the cause (here: free some space) and run the same send again — it continues where it stopped.</p>
+
+<!-- ======================= 9 SECURITY ======================= -->
+<h1 class="chapter" id="security"><span class="num">9</span>Security</h1>
+<p class="chapter-intro">This chapter explains what protects your data, for readers who want to know. You don't need it to use beam.</p>
+
+<h2>Device identity</h2>
+<p>On first start every machine creates a random key pair (X25519), stored in <code>~/.config/beam/identity.key</code> and readable
+only by you. Its fingerprint is what you see next to the device name. Pairing exchanges these public keys; afterwards
+each machine only accepts transfer sessions from keys in its paired list.</p>
+
+<h2>Pairing codes cannot be cracked offline</h2>
+<p>Pairing uses <strong>CPace</strong>, a password-authenticated key exchange (PAKE) over the ristretto255 group. Both machines
+turn the code into a mathematical starting point and exchange values derived from it. If both used the same code they
+arrive at the same secret key; if not, they don't — and the exchanged values reveal nothing that would let an eavesdropper
+test guesses later. An attacker gets exactly one online guess per code, and a failed guess burns the code.</p>
+
+<h2>Every transfer gets fresh keys</h2>
+<p>Each transfer between paired machines starts with a handshake modelled on the Noise “KK” pattern: both sides combine
+their permanent keys with brand-new temporary keys. Only the two genuine devices can compute the result, and recorded
+traffic stays unreadable even if a device key is stolen later (forward secrecy). Each parallel data connection derives its
+own keys, salted with a random value from the receiver, so recorded connections can't be replayed.</p>
+
+<h2>Encryption</h2>
+<p>All traffic after the handshake is encrypted and authenticated with <strong>AES-256-GCM</strong> (on CPUs with AES instructions)
+or <strong>ChaCha20-Poly1305</strong>, using libsodium. File names and folder structure are encrypted too — someone watching the network sees only that
+two machines are talking, and roughly how much data moves. Separately, on your local network each daemon announces its
+device name and fingerprint every two seconds so others can find it; choose a device name you don't mind neighbours on the
+same network seeing.</p>
+
+<h2>The receiving machine is protected</h2>
+<ul>
+  <li>Files can only be written inside the download folder: paths that are absolute, contain <code>..</code>, or would pass through a symbolic link created by the same transfer are rejected.</li>
+  <li>Existing files are never overwritten.</li>
+  <li>Unpaired machines are refused unless you armed a one-shot code yourself.</li>
+</ul>
+
+<h2>The dashboard</h2>
+<p>The web server listens on <code>127.0.0.1</code> only. Every request must carry the token from
+<code>~/.config/beam/web_token</code>, and requests whose <code>Host</code> or <code>Origin</code> isn't the local dashboard are rejected —
+this blocks malicious websites from using your browser to control beam (CSRF and DNS rebinding). The terminal talks to the
+daemon over a Unix socket that only your user can open.</p>
+
+<div class="warn"><b class="label">Keep in mind</b>
+<p>Anyone who can log in as your user can use beam as you, like any other program. Treat <code>~/.config/beam</code> as private,
+and unpair devices you no longer own.</p></div>
+
+<!-- ======================= 10 CONFIG ======================= -->
+<h1 class="chapter" id="config"><span class="num">10</span>Configuration reference</h1>
+
+<h2>Settings</h2>
+<p>Change settings with <code>beam config &lt;key&gt; &lt;value&gt;</code>, in the dashboard's Settings dialog, or by editing
+<code>~/.config/beam/config.json</code> (restart the daemon afterwards with <code>beam stop</code>).</p>
+<table>
+  <thead><tr><th>Key</th><th>Default</th><th>Meaning</th></tr></thead>
+  <tbody>
+    <tr><td class="k"><code>name</code></td><td>host name</td><td>Device name shown to other machines.</td></tr>
+    <tr><td class="k"><code>download_dir</code></td><td><code>~/Downloads/beam</code></td><td>Where received files are saved.</td></tr>
+    <tr><td class="k"><code>auto_accept</code></td><td><code>on</code></td><td>Accept transfers from paired devices without asking.</td></tr>
+    <tr><td class="k"><code>streams</code></td><td>CPU cores, 2–8</td><td>Default number of parallel connections.</td></tr>
+    <tr><td class="k"><code>compress</code></td><td><code>auto</code></td><td><code>auto</code>, <code>off</code>, or a zstd level <code>1</code>–<code>19</code>.</td></tr>
+    <tr><td class="k"><code>peer_port</code></td><td><code>7878</code></td><td>TCP port for transfers (config file or <code>beam daemon --port</code>).</td></tr>
+    <tr><td class="k"><code>web_port</code></td><td><code>8080</code></td><td>Dashboard port on 127.0.0.1 (config file or <code>beam daemon --web</code>; <code>0</code> disables it).</td></tr>
+  </tbody>
+</table>
+
+<h2>Files</h2>
+<table>
+  <thead><tr><th>Path</th><th>Contents</th></tr></thead>
+  <tbody>
+    <tr><td class="k"><code>~/.config/beam/config.json</code></td><td>The settings above.</td></tr>
+    <tr><td class="k"><code>~/.config/beam/identity.key</code></td><td>This device's private key. Deleting it gives the device a new identity — all pairings must then be redone.</td></tr>
+    <tr><td class="k"><code>~/.config/beam/peers.json</code></td><td>Paired devices: name, public key, last known address.</td></tr>
+    <tr><td class="k"><code>~/.config/beam/web_token</code></td><td>Access token for the dashboard.</td></tr>
+    <tr><td class="k"><code>~/.config/beam/history.json</code></td><td>The last 200 transfers.</td></tr>
+    <tr><td class="k"><code>~/.config/beam/daemon.log</code></td><td>Daemon log when it was started automatically (with systemd: <code>journalctl --user -u beam</code>).</td></tr>
+    <tr><td class="k"><code>&lt;download_dir&gt;/.beam/</code></td><td>Progress journals of unfinished incoming transfers.</td></tr>
+    <tr><td class="k"><code>$XDG_RUNTIME_DIR/beam.sock</code></td><td>Socket the <code>beam</code> command uses to talk to the daemon.</td></tr>
+  </tbody>
+</table>
+
+<h2>Network ports</h2>
+<table>
+  <thead><tr><th>Port</th><th>Used for</th><th>Needs to be open?</th></tr></thead>
+  <tbody>
+    <tr><td class="k"><code>7878/tcp</code></td><td>Pairing and transfers</td><td>Yes, on machines that receive (forward it on the router for internet use).</td></tr>
+    <tr><td class="k"><code>7879/udp</code></td><td>Discovery beacons (broadcast and multicast group 239.255.77.78)</td><td>Yes, for automatic discovery on the LAN.</td></tr>
+    <tr><td class="k"><code>8080/tcp</code></td><td>Dashboard, on 127.0.0.1 only</td><td>No — never reachable from the network.</td></tr>
+  </tbody>
+</table>
+
+<h2>Running several independent instances</h2>
+<p><code>beam --home DIR …</code> (or the environment variable <code>BEAM_HOME=DIR</code>) uses a different configuration folder — and
+therefore a separate daemon, identity and pairing list. Give each instance its own ports:</p>
+<pre><span class="p">$ </span>beam --home ~/beam-test daemon --port 7880 --web 8081 --name test-instance</pre>
+<p>This is how the automated tests run two "machines" on one computer.</p>
+
+<!-- ======================= 11 TROUBLE ======================= -->
+<h1 class="chapter" id="trouble"><span class="num">11</span>Troubleshooting and FAQ</h1>
+
+<h2>Error messages</h2>
+<table>
+  <thead><tr><th style="width:42%">Message</th><th>What it means and what to do</th></tr></thead>
+  <tbody>
+    <tr><td>nothing discovered yet — is beam running on the other machine, and UDP 7879 open?</td><td>Start beam on the other machine (<code>beam status</code>) and open UDP 7879. Some Wi-Fi networks (guest networks, “client isolation”) block discovery — use the address instead: <code>--to 192.168.1.20</code>.</td></tr>
+    <tr><td>X is not paired — run `beam pair` on it, or use a one-shot code</td><td>You found the device but haven't paired with it yet (chapter 4).</td></tr>
+    <tr><td>… does not know this device — pair first with `beam pair`</td><td>The other machine doesn't (or no longer) have you in its paired list — e.g. it was reinstalled or unpaired you. Run <code>beam unpair</code> on your side and pair again.</td></tr>
+    <tr><td>… has no active code — run `beam pair` there first</td><td>There is no code waiting on the other machine, it expired, or it was already used. Generate a new one.</td></tr>
+    <tr><td>wrong code (the code is now used up)</td><td>The code didn't match. Run <code>beam pair</code> (or <code>recv --code</code>) again for a fresh code.</td></tr>
+    <tr><td>cannot connect to HOST:7878</td><td>The other daemon isn't running, the address is wrong, or a firewall blocks TCP 7878.</td></tr>
+    <tr><td>this transfer is already running</td><td>An identical transfer is still in progress. Wait for it, or cancel it first.</td></tr>
+    <tr><td>connection lost — run the same send again to resume</td><td>The network dropped or the other side stopped. Just repeat the command.</td></tr>
+    <tr><td>receiver: cannot write …: No space left on device</td><td>The receiving disk is full (or the folder isn't writable). Fix it, then resend to resume.</td></tr>
+    <tr><td>cannot listen on port 7878: Address already in use</td><td>Another program (or another beam) uses the port. Choose another with <code>beam daemon --port</code>.</td></tr>
+    <tr><td>“Open beam from your terminal” in the browser</td><td>The page was opened without the access token. Run <code>beam ui</code>.</td></tr>
+  </tbody>
+</table>
+
+<h2>Frequently asked questions</h2>
+<h3>Where did my files go?</h3>
+<p>Into the receiver's download folder — <code>~/Downloads/beam</code> by default. The final line of <code>beam recv</code>/<code>beam accept</code>
+prints the exact path, and the dashboard shows it on the transfer card.</p>
+
+<h3>Can I send to several machines at once, or in both directions?</h3>
+<p>Yes. Start as many sends as you like (use <code>--detach</code> or several terminals); every daemon sends and receives at the same time.</p>
+
+<h3>Is it safe to use over the internet?</h3>
+<p>Yes — everything is encrypted and authenticated, and an open port 7878 only accepts paired devices (or an armed one-shot
+code). As with any exposed service, keep beam updated.</p>
+
+<h3>Why is my transfer slower than the benchmark?</h3>
+<p>The disk is usually the limit: spinning hard drives manage 100–250 MB/s, and creating very many tiny files is slow on any
+disk. Wi-Fi speed also varies from second to second — look at the throughput graph.</p>
+
+<h3>Does beam sync folders like rsync?</h3>
+<p>No. It copies what you send. Sending a folder again creates a new copy (<code>name (1)</code>) unless the previous transfer of
+the same, unchanged files was unfinished — then it resumes.</p>
+
+<h3>How do I see what the daemon is doing?</h3>
+<p>Read <code>~/.config/beam/daemon.log</code>, or run it in the foreground with extra detail: <code>beam stop</code> then <code>beam daemon -v</code>.</p>
+
+<h3>I reinstalled my OS. Do I need to pair again?</h3>
+<p>Yes, unless you kept <code>~/.config/beam</code>. A fresh install creates a new identity; unpair the old entry on the other machines and pair again.</p>
+
+<!-- ======================= 12 REFERENCE ======================= -->
+<h1 class="chapter" id="reference"><span class="num">12</span>Command reference</h1>
+<p class="chapter-intro"><code>beam [--home DIR] &lt;command&gt; [options]</code> — <code>&lt;peer&gt;</code> is a device name, a fingerprint prefix,
+or <code>host[:port]</code>.</p>
+
+<table>
+  <thead><tr><th>Command</th><th>Description</th></tr></thead>
+  <tbody>
+    <tr><td class="k"><code>send &lt;paths&gt;… --to &lt;peer&gt;</code></td><td>Send files and folders. Options: <code>--streams N</code>, <code>--compress auto|off|1-19</code>, <code>--code CODE</code>, <code>--detach</code>. Ctrl-C cancels (resumable).</td></tr>
+    <tr><td class="k"><code>recv --code</code></td><td>Show a one-shot code (10 min, single use) and wait for the incoming transfer.</td></tr>
+    <tr><td class="k"><code>pair</code></td><td>Show a pairing code (5 min, one attempt) and wait until the other machine uses it.</td></tr>
+    <tr><td class="k"><code>pair &lt;peer&gt; &lt;code&gt;</code></td><td>Pair with the machine that shows the code.</td></tr>
+    <tr><td class="k"><code>unpair &lt;peer&gt;</code></td><td>Forget a paired device.</td></tr>
+    <tr><td class="k"><code>peers</code></td><td>Paired devices (online or not) and devices discovered on the network, with interface and link speed.</td></tr>
+    <tr><td class="k"><code>ls</code> / <code>transfers</code></td><td>Current and recent transfers with their ids.</td></tr>
+    <tr><td class="k"><code>history</code></td><td>The last 200 transfers, kept across restarts.</td></tr>
+    <tr><td class="k"><code>watch &lt;id&gt;</code></td><td>Show the live progress bar of a transfer. Ctrl-C cancels it.</td></tr>
+    <tr><td class="k"><code>accept &lt;id&gt;</code></td><td>Accept a waiting incoming transfer and follow it.</td></tr>
+    <tr><td class="k"><code>reject &lt;id&gt;</code></td><td>Decline a waiting incoming transfer.</td></tr>
+    <tr><td class="k"><code>cancel &lt;id&gt;</code></td><td>Stop a transfer (either direction). It can be resumed later.</td></tr>
+    <tr><td class="k"><code>bench &lt;peer&gt; [--secs N] [--streams N]</code></td><td>Measure link + encryption throughput without disk I/O (default 10 s, max 120 s).</td></tr>
+    <tr><td class="k"><code>ui</code></td><td>Open the dashboard in the browser (prints the address too).</td></tr>
+    <tr><td class="k"><code>status</code> / <code>info</code></td><td>Device, ports, download folder, defaults, cipher and network interfaces.</td></tr>
+    <tr><td class="k"><code>config &lt;key&gt; &lt;value&gt;</code></td><td>Change <code>name</code>, <code>download_dir</code>, <code>auto_accept</code> (on/off), <code>streams</code> or <code>compress</code>.</td></tr>
+    <tr><td class="k"><code>daemon [options]</code></td><td>Run the daemon in the foreground: <code>--port N</code>, <code>--web N</code>, <code>--dir DIR</code>, <code>--name NAME</code>, <code>-v</code> for debug logs. Options given here are saved.</td></tr>
+    <tr><td class="k"><code>stop</code></td><td>Stop the daemon.</td></tr>
+    <tr><td class="k"><code>--version</code>, <code>--help</code></td><td>Print the version or the usage summary.</td></tr>
+  </tbody>
+</table>
+
+<h2>Exit status</h2>
+<p><code>0</code> on success, <code>1</code> when a transfer or command fails, <code>2</code> for usage errors — useful in scripts:</p>
+<pre><span class="p">$ </span>beam send /srv/backups/nightly.tar.zst --to nas &amp;&amp; echo "backup copied"</pre>
+
+<!-- ======================= 13 DEV ======================= -->
+<h1 class="chapter" id="dev"><span class="num">13</span>For developers</h1>
+
+<h2>Project layout</h2>
+<table>
+  <thead><tr><th>Path</th><th>Contents</th></tr></thead>
+  <tbody>
+    <tr><td class="k"><code>src/main.c</code></td><td>Command-line interface</td></tr>
+    <tr><td class="k"><code>src/daemon.c</code>, <code>http.c</code>, <code>api.c</code></td><td>Daemon loop and Unix-socket API, HTTP/SSE server, commands shared by CLI and dashboard</td></tr>
+    <tr><td class="k"><code>src/peer.c</code>, <code>crypt.c</code></td><td>Connection hellos, CPace pairing, KK handshake, encrypted channels</td></tr>
+    <tr><td class="k"><code>src/sender.c</code>, <code>receiver.c</code></td><td>The transfer engine</td></tr>
+    <tr><td class="k"><code>src/manifest.c</code>, <code>journal.c</code>, <code>compress.c</code></td><td>File lists and chunk layout, resume journal, adaptive zstd</td></tr>
+    <tr><td class="k"><code>src/discovery.c</code>, <code>transfer.c</code>, <code>config.c</code></td><td>LAN beacons, transfer state and history, settings and peer store</td></tr>
+    <tr><td class="k"><code>src/proto.h</code></td><td>Wire protocol definition</td></tr>
+    <tr><td class="k"><code>web/</code></td><td>Dashboard (plain HTML, CSS, JavaScript — no build step), embedded into the binary</td></tr>
+    <tr><td class="k"><code>tests/</code></td><td>Unit tests and the end-to-end script</td></tr>
+    <tr><td class="k"><code>docs/</code></td><td>This guide: source in <code>docs/guide/</code>, screenshots in <code>docs/img/</code>, tools in <code>docs/tools/</code></td></tr>
+  </tbody>
+</table>
+
+<h2>Tests</h2>
+<div class="term"><div class="bar"><i></i><i></i><i></i><span>terminal</span></div><pre><span class="p">$ </span>make test
+<span class="o">== build/test_crypto
+  ok
+== build/test_storage
+  ok
+all unit tests passed</span>
+<span class="p">$ </span>make e2e
+<span class="o">== pairing
+  ✓ wrong pairing code rejected
+  ✓ paired alpha ↔ bravo
+== transfers
+  ✓ 300 MiB file
+  ✓ folder: 3000 small files, modes, mtimes, symlink, empty file/dir
+  ✓ name clash saved as 'big (1).bin'
+  ✓ unpaired device refused
+  ✓ one-shot code transfer from an unpaired device
+== resume
+  ✓ killed sender mid-transfer, resumed without resending finished chunks
+== web
+  ✓ web API requires the token and a loopback Host
+== bench
+  ✓ link benchmark
+all 10 end-to-end checks passed</span></pre></div>
+
+<h2>Rebuilding this guide</h2>
+<p>The guide is an HTML page printed to PDF by headless Chrome (Node.js 22+ and Google Chrome or Chromium required):</p>
+<pre><span class="p">$ </span>make docs                <span class="c"># → docs/beam-user-guide.pdf</span>
+<span class="c"># refresh the dashboard screenshots (needs a running daemon, ideally mid-transfer):</span>
+<span class="p">$ </span>node docs/tools/screenshots.mjs "$(beam ui | head -1)" docs/img ~/some/folder</pre>
+
+</body>
+</html>

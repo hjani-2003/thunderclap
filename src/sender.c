@@ -186,7 +186,7 @@ static void *worker_main(void *arg)
             buf[0] = MSG_BENCH;
             randombytes_buf(buf + 1, 64);   /* contents don't matter; avoid trivially-compressible zeros */
             if (chan_send(&w->ch, buf, len) < 0) {
-                set_err(s, "data stream %s lost: %s", "");
+                set_err(s, "data stream lost%s: %s", "");
                 break;
             }
             w->sent++;
@@ -225,7 +225,7 @@ static void *worker_main(void *arg)
         put_u32(msg + 6, c->len);
         put_u64(msg + 10, hash);
         if (chan_send(&w->ch, msg, CHUNK_HDR_LEN + plen) < 0) {
-            set_err(s, "data stream %s lost: %s", "");
+            set_err(s, "data stream lost%s: %s", "");
             q_done(&s->q);
             break;
         }
@@ -449,6 +449,18 @@ static void run(sender_t *s)
             break;
         }
         if (s->err[0]) {
+            /* A broken data stream usually means the receiver hit a problem
+             * (disk full, permissions) and said why on the control channel. */
+            struct pollfd pfd = { .fd = s->conn.fd, .events = POLLIN };
+            if (poll(&pfd, 1, 1000) == 1 && (msg = chan_recv(&s->conn.ctrl, &n)) && n >= 1 &&
+                (msg[0] == MSG_ERROR || msg[0] == MSG_CANCEL)) {
+                rd = (rd_t){ msg + 1, msg + n, false };
+                char *why = msg[0] == MSG_ERROR ? rd_str(&rd) : NULL;
+                transfer_fail(t, msg[0] == MSG_ERROR ? TS_FAILED : TS_CANCELLED, "receiver: %s",
+                              why ? why : "cancelled");
+                free(why);
+                break;
+            }
             buf_t e = { 0 };
             buf_u8(&e, MSG_ERROR);
             buf_str(&e, s->err);
