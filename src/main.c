@@ -1,6 +1,6 @@
-/* beam — command-line front-end. Everything except `beam daemon` talks to
+/* thunderclap — command-line front-end. Everything except `clap daemon` talks to
  * the background daemon over a unix socket, starting it when needed. */
-#include "beam.h"
+#include "clap.h"
 #include "config.h"
 #include "compress.h"
 #include "daemon.h"
@@ -24,9 +24,10 @@ static void on_sigint(int sig)
 
 static void usage(void)
 {
-    puts("beam " BEAM_VERSION " — fast, encrypted file transfer between Linux machines\n"
+    puts("thunderclap " CLAP_VERSION " — fast, encrypted file transfer between Linux machines\n"
+         "Sleep through the transfer. Wake up to victory.\n"
          "\n"
-         "usage: beam [--home DIR] <command> [options]\n"
+         "usage: clap [--home DIR] <command> [options]\n"
          "\n"
          "  send <path>... --to <peer>   send files/folders to a paired peer\n"
          "       [--streams N] [--compress auto|off|1-19] [--code CODE] [--detach]\n"
@@ -90,7 +91,7 @@ static bool start_daemon(void)
         if (ipc_ping())
             return true;
     }
-    fprintf(stderr, "beam: the daemon did not start; see %s\n", logpath);
+    fprintf(stderr, "clap: the daemon did not start; see %s\n", logpath);
     return false;
 }
 
@@ -98,17 +99,17 @@ static bool start_daemon(void)
 static cJSON *call(const char *cmd, cJSON *args)
 {
     if (!start_daemon()) {
-        fprintf(stderr, "beam: cannot reach the daemon\n");
+        fprintf(stderr, "clap: cannot reach the daemon\n");
         return NULL;
     }
     cJSON *r = ipc_call(cmd, args);
     if (!r) {
-        fprintf(stderr, "beam: no reply from the daemon\n");
+        fprintf(stderr, "clap: no reply from the daemon\n");
         return NULL;
     }
     const cJSON *e = cJSON_GetObjectItem(r, "error");
     if (cJSON_IsString(e)) {
-        fprintf(stderr, "beam: %s\n", e->valuestring);
+        fprintf(stderr, "clap: %s\n", e->valuestring);
         cJSON_Delete(r);
         return NULL;
     }
@@ -224,7 +225,7 @@ static int watch(int id)
         cJSON *t = ipc_call("transfer", a);
         cJSON_Delete(a);
         if (!t) {
-            fprintf(stderr, "\nbeam: lost contact with the daemon\n");
+            fprintf(stderr, "\nclap: lost contact with the daemon\n");
             return 1;
         }
         const char *state = jstr(t, "state");
@@ -299,7 +300,7 @@ static int cmd_send(int argc, char **argv, bool bench)
         for (int i = optind; i < argc; i++) {
             char *real = realpath(argv[i], NULL);
             if (!real) {
-                fprintf(stderr, "beam: %s: %s\n", argv[i], strerror(errno));
+                fprintf(stderr, "clap: %s: %s\n", argv[i], strerror(errno));
                 cJSON_Delete(a);
                 return 1;
             }
@@ -317,13 +318,13 @@ static int cmd_send(int argc, char **argv, bool bench)
             free(real);
         }
         if (cJSON_GetArraySize(paths) == 0) {
-            fprintf(stderr, "usage: beam send <path>... --to <peer>\n");
+            fprintf(stderr, "usage: clap send <path>... --to <peer>\n");
             cJSON_Delete(a);
             return 2;
         }
     }
     if (!cJSON_GetObjectItem(a, "to")) {
-        fprintf(stderr, "beam: say where to send with --to <peer>  (see `beam peers`)\n");
+        fprintf(stderr, "clap: say where to send with --to <peer>  (see `clap peers`)\n");
         cJSON_Delete(a);
         return 2;
     }
@@ -334,7 +335,7 @@ static int cmd_send(int argc, char **argv, bool bench)
     int id = (int)jnum(r, "id");
     cJSON_Delete(r);
     if (detach) {
-        printf("transfer %d started — follow it with `beam watch %d`\n", id, id);
+        printf("transfer %d started — follow it with `clap watch %d`\n", id, id);
         return 0;
     }
     return watch(id);
@@ -348,14 +349,14 @@ static int cmd_peers(void)
     const cJSON *paired = cJSON_GetObjectItem(r, "paired"), *disc = cJSON_GetObjectItem(r, "discovered"), *p;
     printf("Paired:\n");
     if (!cJSON_GetArraySize(paired))
-        printf("  (none — pair with `beam pair`)\n");
+        printf("  (none — pair with `clap pair`)\n");
     cJSON_ArrayForEach(p, paired) {
         printf("  %-20s %s  %s:%d  %s\n", jstr(p, "name"), jstr(p, "fp"), jstr(p, "host"), (int)jnum(p, "port"),
                cJSON_IsTrue(cJSON_GetObjectItem(p, "online")) ? "online" : "not seen");
     }
     printf("\nOn this network:\n");
     if (!cJSON_GetArraySize(disc))
-        printf("  (nothing discovered yet — is beam running on the other machine, and UDP %d open?)\n",
+        printf("  (nothing discovered yet — is thunderclap running on the other machine, and UDP %d open?)\n",
                DISCOVERY_PORT);
     cJSON_ArrayForEach(p, disc) {
         char link[48];
@@ -396,7 +397,7 @@ static int cmd_pair(int argc, char **argv)
     cJSON *r = call("pair_start", NULL);
     if (!r)
         return 1;
-    printf("Pairing code:  %s\n\nOn the other machine run:\n  beam pair %s %s\n\n(valid for %d minutes, one attempt)\n",
+    printf("Pairing code:  %s\n\nOn the other machine run:\n  clap pair %s %s\n\n(valid for %d minutes, one attempt)\n",
            jstr(r, "code"), jstr(r, "name"), jstr(r, "code"), (int)jnum(r, "ttl") / 60);
     fflush(stdout);
     double until = now_sec() + jnum(r, "ttl");
@@ -420,7 +421,7 @@ static int cmd_pair(int argc, char **argv)
         cJSON_Delete(st);
         cJSON_Delete(p);
         if (ttl == 0) {
-            fprintf(stderr, "pairing attempt failed (wrong code?) — run `beam pair` again\n");
+            fprintf(stderr, "pairing attempt failed (wrong code?) — run `clap pair` again\n");
             return 1;
         }
     }
@@ -434,7 +435,7 @@ static int cmd_recv(int argc, char **argv)
     cJSON *r = call("recv_code", NULL);
     if (!r)
         return 1;
-    printf("One-shot code:  %s\n\nOn the sending machine run:\n  beam send <files> --to %s --code %s\n\n"
+    printf("One-shot code:  %s\n\nOn the sending machine run:\n  clap send <files> --to %s --code %s\n\n"
            "Waiting for the transfer… (Ctrl-C to stop waiting)\n",
            jstr(r, "code"), jstr(r, "name"), jstr(r, "code"));
     fflush(stdout);
@@ -502,10 +503,10 @@ static int cmd_status(void)
     cJSON *r = call("info", NULL);
     if (!r)
         return 1;
-    printf("beam %s — daemon running\n", jstr(r, "version"));
+    printf("thunderclap %s — daemon running\n", jstr(r, "version"));
     printf("  device       %s (%s)\n", jstr(r, "name"), jstr(r, "fp"));
     printf("  peer port    %d (TCP), discovery UDP %d\n", (int)jnum(r, "peer_port"), DISCOVERY_PORT);
-    printf("  web UI       http://127.0.0.1:%d  (open with `beam ui`)\n", (int)jnum(r, "web_port"));
+    printf("  web UI       http://127.0.0.1:%d  (open with `clap ui`)\n", (int)jnum(r, "web_port"));
     printf("  downloads    %s\n", jstr(r, "download_dir"));
     printf("  auto-accept  %s from paired peers\n", cJSON_IsTrue(cJSON_GetObjectItem(r, "auto_accept")) ? "on" : "off");
     int comp = (int)jnum(r, "compress");
@@ -542,7 +543,7 @@ static int cmd_config(int argc, char **argv)
     } else if (!strcmp(k, "name") || !strcmp(k, "compress"))
         cJSON_AddStringToObject(a, k, v);
     else {
-        fprintf(stderr, "beam: unknown setting '%s'\n", k);
+        fprintf(stderr, "clap: unknown setting '%s'\n", k);
         cJSON_Delete(a);
         return 2;
     }
@@ -616,10 +617,10 @@ int main(int argc, char **argv)
             usage();
             return 0;
         } else if (!strcmp(argv[i], "--version")) {
-            puts(BEAM_VERSION);
+            puts(CLAP_VERSION);
             return 0;
         } else {
-            fprintf(stderr, "beam: unknown option %s\n", argv[i]);
+            fprintf(stderr, "clap: unknown option %s\n", argv[i]);
             return 2;
         }
     }
@@ -628,11 +629,11 @@ int main(int argc, char **argv)
         return 2;
     }
     if (crypt_init() < 0) {
-        fprintf(stderr, "beam: cannot initialise libsodium\n");
+        fprintf(stderr, "clap: cannot initialise libsodium\n");
         return 1;
     }
     if (config_load(g_home_override) < 0) {
-        fprintf(stderr, "beam: cannot load configuration from %s\n", g_cfg.home);
+        fprintf(stderr, "clap: cannot load configuration from %s\n", g_cfg.home);
         return 1;
     }
     const char *cmd = argv[i];

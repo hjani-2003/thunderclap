@@ -8,7 +8,7 @@
 #include <sys/stat.h>
 
 #define MCAST_GROUP  "239.255.77.78"
-#define BEACON_MAGIC "BEAM1 "
+#define BEACON_MAGIC "CLAP1 "
 #define EXPIRE_SECS  10.0
 #define MAX_DPEERS   64
 #define MAX_ADDRS    4

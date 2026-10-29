@@ -148,11 +148,11 @@ int connect_session(const char *host, int port, const uint8_t peer_pk[KEY_LEN], 
 
     uint8_t resp[1 + KEY_LEN + 1];
     if (rc < 0 || read_full(s->fd, resp, sizeof resp) < 0) {
-        snprintf(err, errn, "handshake with %s failed (is beam running there?)", host);
+        snprintf(err, errn, "handshake with %s failed (is thunderclap running there?)", host);
         goto fail;
     }
     if (resp[0] == ST_UNKNOWN) {
-        snprintf(err, errn, "%s does not know this device — pair first with `beam pair`", host);
+        snprintf(err, errn, "%s does not know this device — pair first with `clap pair`", host);
         goto fail;
     }
     if (resp[0] != ST_OK) {
@@ -200,11 +200,11 @@ static int cpace_client(uint8_t kind, const char *host, int port, const char *co
 
     uint8_t resp[1 + 32 + 1];
     if (rc < 0 || read_full(s->fd, resp, sizeof resp) < 0) {
-        snprintf(err, errn, "handshake with %s failed (is beam running there?)", host);
+        snprintf(err, errn, "handshake with %s failed (is thunderclap running there?)", host);
         goto fail;
     }
     if (resp[0] != ST_OK) {
-        snprintf(err, errn, "%s has no active code — run `beam %s` there first", host,
+        snprintf(err, errn, "%s has no active code — run `clap %s` there first", host,
                  kind == HELLO_PAIR ? "pair" : "recv --code");
         goto fail;
     }

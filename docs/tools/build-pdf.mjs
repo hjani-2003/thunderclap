@@ -1,4 +1,4 @@
-// Prints docs/guide/guide.html to docs/beam-user-guide.pdf with headless Chrome.
+// Prints docs/guide/guide.html to docs/thunderclap-user-guide.pdf with headless Chrome.
 //   node docs/tools/build-pdf.mjs [input.html] [output.pdf]
 import { writeFileSync } from 'node:fs';
 import { resolve } from 'node:path';
@@ -6,7 +6,7 @@ import { pathToFileURL } from 'node:url';
 import { launch } from './cdp.mjs';
 
 const input = resolve(process.argv[2] || 'docs/guide/guide.html');
-const output = resolve(process.argv[3] || 'docs/beam-user-guide.pdf');
+const output = resolve(process.argv[3] || 'docs/thunderclap-user-guide.pdf');
 
 const b = await launch();
 await b.goto(pathToFileURL(input).href, 500);

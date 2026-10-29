@@ -3,7 +3,7 @@
 #ifndef TRANSFER_H
 #define TRANSFER_H
 
-#include "beam.h"
+#include "clap.h"
 #include <stdatomic.h>
 #include <cjson/cJSON.h>
 

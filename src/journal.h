@@ -1,9 +1,9 @@
 /* Resume journal: a bitmap of chunks that are safely on disk.
- * File layout: "BEAMJ001" | n_chunks u32 | meta_len u32 | meta | bitmap */
+ * File layout: "CLAPJ001" | n_chunks u32 | meta_len u32 | meta | bitmap */
 #ifndef JOURNAL_H
 #define JOURNAL_H
 
-#include "beam.h"
+#include "clap.h"
 
 typedef struct {
     char *path;

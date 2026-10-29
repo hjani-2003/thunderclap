@@ -4,7 +4,7 @@
 #ifndef MANIFEST_H
 #define MANIFEST_H
 
-#include "beam.h"
+#include "clap.h"
 
 enum { ENT_FILE = 0, ENT_DIR = 1, ENT_LINK = 2 };
 

@@ -97,7 +97,7 @@ static void test_layout(void)
 
 static void test_journal(void)
 {
-    char dir[] = "/tmp/beam-test-XXXXXX";
+    char dir[] = "/tmp/thunderclap-test-XXXXXX";
     CHECK(mkdtemp(dir) != NULL);
     char path[128];
     snprintf(path, sizeof path, "%s/j", dir);

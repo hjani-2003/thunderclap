@@ -63,7 +63,7 @@ static void copy_int(int *dst, const cJSON *obj, const char *key)
 int config_load(const char *home)
 {
     memset(&g_cfg, 0, sizeof g_cfg);
-    const char *env = getenv("BEAM_HOME");
+    const char *env = getenv("CLAP_HOME");
     const char *h = getenv("HOME");
     if (!h)
         h = "/tmp";
@@ -72,32 +72,32 @@ int config_load(const char *home)
     else if (env && *env)
         snprintf(g_cfg.home, sizeof g_cfg.home, "%s", env);
     else if (getenv("XDG_CONFIG_HOME"))
-        snprintf(g_cfg.home, sizeof g_cfg.home, "%s/beam", getenv("XDG_CONFIG_HOME"));
+        snprintf(g_cfg.home, sizeof g_cfg.home, "%s/thunderclap", getenv("XDG_CONFIG_HOME"));
     else
-        snprintf(g_cfg.home, sizeof g_cfg.home, "%s/.config/beam", h);
+        snprintf(g_cfg.home, sizeof g_cfg.home, "%s/.config/thunderclap", h);
     if (mkdir_p(g_cfg.home, 0700) < 0)
         return -1;
 
     /* A custom home gets its own socket so several daemons can coexist. */
     const char *rt = getenv("XDG_RUNTIME_DIR");
     if (!home && !(env && *env) && rt && *rt)
-        snprintf(g_cfg.sock_path, sizeof g_cfg.sock_path, "%s/beam.sock", rt);
+        snprintf(g_cfg.sock_path, sizeof g_cfg.sock_path, "%s/clap.sock", rt);
     else
-        snprintf(g_cfg.sock_path, sizeof g_cfg.sock_path, "%s/beam.sock", g_cfg.home);
+        snprintf(g_cfg.sock_path, sizeof g_cfg.sock_path, "%s/clap.sock", g_cfg.home);
     if (strlen(g_cfg.sock_path) >= 100) {
         /* sun_path holds ~108 bytes; use a short per-home name instead. */
         uint8_t h[8];
         char hex[17];
         crypto_generichash(h, sizeof h, (const uint8_t *)g_cfg.home, strlen(g_cfg.home), NULL, 0);
         hex_encode(h, sizeof h, hex);
-        snprintf(g_cfg.sock_path, sizeof g_cfg.sock_path, "%s/beam-%s.sock", rt && *rt ? rt : "/tmp", hex);
+        snprintf(g_cfg.sock_path, sizeof g_cfg.sock_path, "%s/clap-%s.sock", rt && *rt ? rt : "/tmp", hex);
     }
 
     /* defaults */
     char host[64] = "linux";
     gethostname(host, sizeof host);
     snprintf(g_cfg.name, sizeof g_cfg.name, "%s", host);
-    snprintf(g_cfg.download_dir, sizeof g_cfg.download_dir, "%s/Downloads/beam", h);
+    snprintf(g_cfg.download_dir, sizeof g_cfg.download_dir, "%s/Downloads/thunderclap", h);
     g_cfg.peer_port = DEFAULT_PEER_PORT;
     g_cfg.web_port = DEFAULT_WEB_PORT;
     long cores = sysconf(_SC_NPROCESSORS_ONLN);

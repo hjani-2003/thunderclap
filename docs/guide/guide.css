@@ -1,8 +1,8 @@
-/* Print stylesheet for the beam user guide (rendered by headless Chrome). */
+/* Print stylesheet for the thunderclap user guide (rendered by headless Chrome). */
 @page {
   size: A4;
   margin: 20mm 18mm 22mm;
-  @bottom-left { content: "beam user guide"; font: 8pt "Noto Sans", sans-serif; color: #8a94a6; }
+  @bottom-left { content: "thunderclap user guide"; font: 8pt "Noto Sans", sans-serif; color: #8a94a6; }
   @bottom-right { content: counter(page); font: 8pt "Noto Sans", sans-serif; color: #8a94a6; }
 }
 @page :first {
@@ -52,13 +52,15 @@ a { color: var(--accent); text-decoration: none; }
   overflow: hidden;
 }
 .cover .mark { width: 74px; height: 74px; }
-.cover .mark path { fill: none; stroke-width: 3.4; stroke-linecap: round; stroke-linejoin: round; }
-.cover h1 { font-size: 54pt; margin: 18mm 0 0; letter-spacing: -0.02em; line-height: 1; font-weight: 700; }
+.cover .mark path { stroke-linejoin: round; }
+.cover h1 { font-size: 50pt; margin: 18mm 0 0; letter-spacing: -0.02em; line-height: 1; font-weight: 700; }
+.cover .tagline { font-size: 15pt; font-style: italic; color: #fde68a; margin-top: 5mm; }
+.cover .subtitle code { font-size: 0.9em; color: #e6ebf5; background: rgba(255, 255, 255, 0.08); border-color: #2c4463; }
 .cover .subtitle { font-size: 17pt; color: #9fb3cc; margin-top: 5mm; font-weight: 400; }
 .cover .lede { font-size: 11.5pt; color: #c9d4e3; max-width: 125mm; margin-top: 14mm; line-height: 1.6; }
 .cover .pills { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10mm; max-width: 150mm; }
 .cover .pill { font-size: 8.5pt; padding: 3px 10px; border-radius: 99px; border: 1px solid #2c4463; color: #b9c7da; background: rgba(255,255,255,0.03); }
-.cover .beams { position: absolute; right: -30mm; bottom: 40mm; width: 170mm; opacity: 0.9; }
+.cover .streaks { position: absolute; right: -30mm; bottom: 40mm; width: 170mm; opacity: 0.9; }
 .cover .meta { margin-top: auto; font-size: 9pt; color: #8193ad; display: flex; justify-content: space-between; border-top: 1px solid #22344f; padding-top: 5mm; }
 
 /* ---------- headings & text ---------- */

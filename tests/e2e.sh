@@ -1,16 +1,16 @@
 #!/usr/bin/env bash
-# End-to-end test: two beam daemons on this machine (separate homes and
+# End-to-end test: two thunderclap daemons on this machine (separate homes and
 # ports) exercise pairing, transfers, metadata, resume and one-shot codes.
 set -euo pipefail
 
-BEAM="$(cd "$(dirname "$0")/.." && pwd)/beam"
-[ -x "$BEAM" ] || { echo "build first: make"; exit 1; }
-W="$(mktemp -d "${TMPDIR:-/tmp}/beam-e2e.XXXXXX")"
+CLAP="$(cd "$(dirname "$0")/.." && pwd)/clap"
+[ -x "$CLAP" ] || { echo "build first: make"; exit 1; }
+W="$(mktemp -d "${TMPDIR:-/tmp}/clap-e2e.XXXXXX")"
 A="$W/a"; B="$W/b"; C="$W/c"
 PASS=0
 
 cleanup() {
-    for h in "$A" "$B" "$C"; do "$BEAM" --home "$h" stop >/dev/null 2>&1 || true; done
+    for h in "$A" "$B" "$C"; do "$CLAP" --home "$h" stop >/dev/null 2>&1 || true; done
     rm -rf "$W"
 }
 trap cleanup EXIT
@@ -21,8 +21,8 @@ fail() { echo "  ✗ $*"; echo "--- logs ---"; tail -n 20 "$A/log" "$B/log" 2>/d
 
 start() {   # start <home> <name> <port offset>
     mkdir -p "$1"
-    "$BEAM" --home "$1" daemon --name "$2" --port $((47800 + $3)) --web $((48000 + $3)) --dir "$1/dl" >>"$1/log" 2>&1 &
-    for _ in $(seq 50); do [ -f "$1/daemon.pid" ] && "$BEAM" --home "$1" status >/dev/null 2>&1 && return; sleep 0.1; done
+    "$CLAP" --home "$1" daemon --name "$2" --port $((47800 + $3)) --web $((48000 + $3)) --dir "$1/dl" >>"$1/log" 2>&1 &
+    for _ in $(seq 50); do [ -f "$1/daemon.pid" ] && "$CLAP" --home "$1" status >/dev/null 2>&1 && return; sleep 0.1; done
     fail "daemon $2 did not start"
 }
 
@@ -48,37 +48,37 @@ ln -s sub/f1 "$W/src/tree/link"
 touch -d '2021-06-01 10:00' "$W/src/tree/app.log"
 
 echo "== pairing"
-"$BEAM" --home "$B" pair > "$W/p1" 2>&1 & BG=$!
+"$CLAP" --home "$B" pair > "$W/p1" 2>&1 & BG=$!
 sleep 0.5
-if "$BEAM" --home "$A" pair 127.0.0.1:47802 0000-0000-0000 >/dev/null 2>&1; then fail "wrong code accepted"; fi
+if "$CLAP" --home "$A" pair 127.0.0.1:47802 0000-0000-0000 >/dev/null 2>&1; then fail "wrong code accepted"; fi
 wait $BG || true
 ok "wrong pairing code rejected"
-"$BEAM" --home "$B" pair > "$W/p2" 2>&1 & BG=$!
+"$CLAP" --home "$B" pair > "$W/p2" 2>&1 & BG=$!
 sleep 0.5
-"$BEAM" --home "$A" pair 127.0.0.1:47802 "$(code_from "$W/p2")" >/dev/null || fail "pairing failed"
+"$CLAP" --home "$A" pair 127.0.0.1:47802 "$(code_from "$W/p2")" >/dev/null || fail "pairing failed"
 wait $BG
-"$BEAM" --home "$B" peers | grep -q alpha || fail "bravo does not list alpha"
+"$CLAP" --home "$B" peers | grep -q alpha || fail "bravo does not list alpha"
 ok "paired alpha ↔ bravo"
 
 echo "== transfers"
-"$BEAM" --home "$A" send "$W/src/big.bin" --to 127.0.0.1:47802 >/dev/null || fail "big file send"
+"$CLAP" --home "$A" send "$W/src/big.bin" --to 127.0.0.1:47802 >/dev/null || fail "big file send"
 cmp "$W/src/big.bin" "$B/dl/big.bin" || fail "big file differs"
 ok "300 MiB file"
 
-"$BEAM" --home "$A" send "$W/src/tree" --to 127.0.0.1:47802 >/dev/null || fail "tree send"
+"$CLAP" --home "$A" send "$W/src/tree" --to 127.0.0.1:47802 >/dev/null || fail "tree send"
 diff <(tree_digest "$W/src/tree") <(tree_digest "$B/dl/tree") >/dev/null || fail "tree differs"
 ok "folder: 3000 small files, modes, mtimes, symlink, empty file/dir"
 
-"$BEAM" --home "$A" send "$W/src/big.bin" --to 127.0.0.1:47802 >/dev/null || fail "second send"
+"$CLAP" --home "$A" send "$W/src/big.bin" --to 127.0.0.1:47802 >/dev/null || fail "second send"
 [ -f "$B/dl/big (1).bin" ] || fail "existing file was not kept"
 ok "name clash saved as 'big (1).bin'"
 
-if "$BEAM" --home "$C" send "$W/src/big.bin" --to 127.0.0.1:47802 >/dev/null 2>&1; then fail "unpaired send accepted"; fi
+if "$CLAP" --home "$C" send "$W/src/big.bin" --to 127.0.0.1:47802 >/dev/null 2>&1; then fail "unpaired send accepted"; fi
 ok "unpaired device refused"
 
-"$BEAM" --home "$B" recv --code > "$W/r1" 2>&1 & BG=$!
+"$CLAP" --home "$B" recv --code > "$W/r1" 2>&1 & BG=$!
 sleep 0.5
-"$BEAM" --home "$C" send "$W/src/tree/app.log" --to 127.0.0.1:47802 --code "$(code_from "$W/r1")" >/dev/null || fail "code send"
+"$CLAP" --home "$C" send "$W/src/tree/app.log" --to 127.0.0.1:47802 --code "$(code_from "$W/r1")" >/dev/null || fail "code send"
 wait $BG
 cmp "$W/src/tree/app.log" "$B/dl/app.log" || fail "code transfer differs"
 ok "one-shot code transfer from an unpaired device"
@@ -86,16 +86,16 @@ ok "one-shot code transfer from an unpaired device"
 echo "== resume"
 mkdir -p "$W/src/res"; ln "$W/src/big.bin" "$W/src/res/big.bin"; cp -r "$W/src/tree/sub" "$W/src/res/"
 # zstd level 19 on random data over one stream is slow enough to interrupt.
-"$BEAM" --home "$A" send "$W/src/res" --to 127.0.0.1:47802 --compress 19 --streams 1 --detach >/dev/null
+"$CLAP" --home "$A" send "$W/src/res" --to 127.0.0.1:47802 --compress 19 --streams 1 --detach >/dev/null
 sleep 2
 kill -9 "$(cat "$A/daemon.pid")"; rm -f "$A/daemon.pid"
 sleep 1
-ls "$B/dl/.beam/"*.journal >/dev/null 2>&1 || fail "no journal after interruption"
+ls "$B/dl/.clap/"*.journal >/dev/null 2>&1 || fail "no journal after interruption"
 start "$A" alpha 1
-"$BEAM" --home "$A" send "$W/src/res" --to 127.0.0.1:47802 > "$W/resume.out" || fail "resumed send"
+"$CLAP" --home "$A" send "$W/src/res" --to 127.0.0.1:47802 > "$W/resume.out" || fail "resumed send"
 grep -q resumed "$W/resume.out" || fail "transfer did not resume"
 diff <(tree_digest "$W/src/res") <(tree_digest "$B/dl/res") >/dev/null || fail "resumed tree differs"
-ls "$B/dl/.beam/"*.journal >/dev/null 2>&1 && fail "journal left behind"
+ls "$B/dl/.clap/"*.journal >/dev/null 2>&1 && fail "journal left behind"
 ok "killed sender mid-transfer, resumed without resending finished chunks"
 
 echo "== web"
@@ -106,7 +106,7 @@ curl -sf -X POST -H "Authorization: Bearer $TOKEN" http://127.0.0.1:48001/api/in
 ok "web API requires the token and a loopback Host"
 
 echo "== bench"
-"$BEAM" --home "$A" bench 127.0.0.1:47802 --secs 2 || fail "bench"
+"$CLAP" --home "$A" bench 127.0.0.1:47802 --secs 2 || fail "bench"
 ok "link benchmark"
 
 echo "all $PASS end-to-end checks passed"

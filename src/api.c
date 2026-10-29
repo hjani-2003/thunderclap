@@ -1,5 +1,5 @@
 #include "api.h"
-#include "beam.h"
+#include "clap.h"
 #include "config.h"
 #include "compress.h"
 #include "discovery.h"
@@ -55,7 +55,7 @@ static cJSON *info_json(void)
     cJSON *j = cJSON_CreateObject();
     cJSON_AddStringToObject(j, "name", g_cfg.name);
     cJSON_AddStringToObject(j, "fp", g_cfg.fp);
-    cJSON_AddStringToObject(j, "version", BEAM_VERSION);
+    cJSON_AddStringToObject(j, "version", CLAP_VERSION);
     cJSON_AddNumberToObject(j, "peer_port", g_cfg.peer_port);
     cJSON_AddNumberToObject(j, "web_port", g_cfg.web_port);
     cJSON_AddStringToObject(j, "download_dir", g_cfg.download_dir);
@@ -120,7 +120,7 @@ static int resolve_target(const char *to, bool with_code, send_req_t *rq, char *
             memcpy(rq->peer_pk, p.pk, KEY_LEN);
             return 0;
         }
-        snprintf(err, errn, "%s is not paired — run `beam pair` on it, or use a one-shot code", rq->peer_name);
+        snprintf(err, errn, "%s is not paired — run `clap pair` on it, or use a one-shot code", rq->peer_name);
         return -1;
     }
     if (parse_host_port(to, rq->host, sizeof rq->host, &rq->port, DEFAULT_PEER_PORT) < 0) {
@@ -142,7 +142,7 @@ static int resolve_target(const char *to, bool with_code, send_req_t *rq, char *
     }
     free(ps);
     if (!rq->have_pk) {
-        snprintf(err, errn, "no paired peer at %s — pair first with `beam pair`, or use a one-shot code", to);
+        snprintf(err, errn, "no paired peer at %s — pair first with `clap pair`, or use a one-shot code", to);
         return -1;
     }
     return 0;

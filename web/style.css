@@ -6,6 +6,8 @@
   --text: #0f172a;
   --muted: #64748b;
   --accent: #0891b2;
+  --bolt: #facc15;
+  --bolt-edge: #a16207;
   --accent-ink: #ffffff;
   --out: #0891b2;
   --in: #7c3aed;
@@ -28,6 +30,8 @@
     --text: #e6ebf5;
     --muted: #8b97ad;
     --accent: #22d3ee;
+    --bolt: #fde047;
+    --bolt-edge: #ca8a04;
     --accent-ink: #04202a;
     --out: #22d3ee;
     --in: #a78bfa;
@@ -64,8 +68,7 @@ h3 { margin: 0 0 6px; font-size: 18px; }
   position: sticky; top: 0; z-index: 5;
 }
 .brand { display: flex; align-items: center; gap: 8px; }
-.logo { width: 26px; height: 26px; fill: none; stroke: var(--accent); stroke-width: 3.5; stroke-linecap: round; stroke-linejoin: round; }
-.logo .logo2 { stroke: var(--in); }
+.logo { width: 26px; height: 26px; fill: var(--bolt); stroke: var(--bolt-edge); stroke-width: 1.5; stroke-linejoin: round; }
 .brand-name { font-weight: 700; font-size: 18px; letter-spacing: 0.02em; }
 .device { display: flex; align-items: center; gap: 8px; min-width: 0; flex: 1; }
 .device #dev-name { font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }

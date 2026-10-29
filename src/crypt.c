@@ -43,7 +43,7 @@ int identity_load(const char *path, identity_t *id)
 void key_fingerprint(const uint8_t pk[KEY_LEN], char out[17])
 {
     uint8_t h[8];
-    crypto_generichash(h, sizeof h, pk, KEY_LEN, (const uint8_t *)"beam-fp", 7);
+    crypto_generichash(h, sizeof h, pk, KEY_LEN, (const uint8_t *)"clap-fp", 7);
     hex_encode(h, sizeof h, out);
 }
 
@@ -75,7 +75,7 @@ int cpace_start(cpace_t *c, const char *code, const uint8_t sid[SID_LEN])
     uint8_t h[crypto_core_ristretto255_HASHBYTES], G[crypto_core_ristretto255_BYTES];
     crypto_generichash_state st;
     crypto_generichash_init(&st, NULL, 0, sizeof h);
-    crypto_generichash_update(&st, (const uint8_t *)"beam-cpace-v1", 13);
+    crypto_generichash_update(&st, (const uint8_t *)"clap-cpace-v1", 13);
     crypto_generichash_update(&st, sid, SID_LEN);
     crypto_generichash_update(&st, (const uint8_t *)digits, n);
     crypto_generichash_final(&st, h, sizeof h);
@@ -96,7 +96,7 @@ int cpace_finish(cpace_t *c, const uint8_t peer_Y[32], bool initiator, uint8_t i
         return -1;
     crypto_generichash_state st;
     crypto_generichash_init(&st, NULL, 0, KEY_LEN);
-    crypto_generichash_update(&st, (const uint8_t *)"beam-cpace-isk", 14);
+    crypto_generichash_update(&st, (const uint8_t *)"clap-cpace-isk", 14);
     crypto_generichash_update(&st, K, sizeof K);
     crypto_generichash_update(&st, c->sid, SID_LEN);
     crypto_generichash_update(&st, initiator ? c->Y : peer_Y, 32);
@@ -114,7 +114,7 @@ static int kk_mix(const uint8_t dh[3][KEY_LEN], const uint8_t *is, const uint8_t
 {
     crypto_generichash_state st;
     crypto_generichash_init(&st, NULL, 0, KEY_LEN);
-    crypto_generichash_update(&st, (const uint8_t *)"beam-kk-v1", 10);
+    crypto_generichash_update(&st, (const uint8_t *)"clap-kk-v1", 10);
     crypto_generichash_update(&st, dh[0], 3 * KEY_LEN);
     crypto_generichash_update(&st, is, KEY_LEN);
     crypto_generichash_update(&st, rs, KEY_LEN);

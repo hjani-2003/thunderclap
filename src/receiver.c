@@ -29,7 +29,7 @@ typedef struct rsession {
     int root_fd;              /* for syncfs */
     char **local;             /* per entry: final local path */
     _Atomic int32_t *remaining; /* per entry: chunks still missing */
-    int *fds;                 /* per entry: open .beam-part (large files) */
+    int *fds;                 /* per entry: open .clap-part (large files) */
     pthread_mutex_t fd_lock;
 
     pthread_mutex_t lock;
@@ -122,7 +122,7 @@ static void io_fail(rsession_t *r, const char *what, const char *path)
 
 static void part_path(const char *final, char *out, size_t n)
 {
-    snprintf(out, n, "%s.beam-part", final);
+    snprintf(out, n, "%s.clap-part", final);
 }
 
 static int open_part(const char *final, int flags)
@@ -153,7 +153,7 @@ static void apply_attrs(int fd, const entry_t *e)
     futimens(fd, ts);
 }
 
-/* Applies metadata, closes, and moves the .beam-part into place. */
+/* Applies metadata, closes, and moves the .clap-part into place. */
 static int finalize_fd(rsession_t *r, uint32_t ei, int fd)
 {
     const entry_t *e = &r->m.ents[ei];
@@ -664,7 +664,7 @@ void receiver_run(session_conn_t *s)
     if (r->bench || !s->paired || g_cfg.auto_accept) {
         t->decision = 1;
     } else {
-        LOGI("incoming transfer %d from %s: %s — waiting for `beam accept %d`", t->id, t->peer_name, t->title,
+        LOGI("incoming transfer %d from %s: %s — waiting for `clap accept %d`", t->id, t->peer_name, t->title,
              t->id);
     }
     if (!wait_decision(r)) {
@@ -723,7 +723,7 @@ static int open_journal(rsession_t *r, char *err, size_t errn)
 {
     snprintf(r->root, sizeof r->root, "%s", g_cfg.download_dir);
     char jdir[1200], jpath[1300], idhex[33];
-    snprintf(jdir, sizeof jdir, "%s/.beam", r->root);
+    snprintf(jdir, sizeof jdir, "%s/.clap", r->root);
     if (mkdir_p(jdir, 0700) < 0) {
         snprintf(err, errn, "cannot create %s: %s", jdir, strerror(errno));
         return -1;
@@ -776,7 +776,7 @@ static int open_journal(rsession_t *r, char *err, size_t errn)
         atomic_store(&r->t->bytes_done, have);
         LOGI("resuming transfer %d: %u/%u chunks already here", r->t->id, journal_done(&r->j), r->m.n_chunks);
     }
-    /* Show where the files land, e.g. ~/Downloads/beam/photos */
+    /* Show where the files land, e.g. ~/Downloads/thunderclap/photos */
     int tops = 0, first = -1;
     for (uint32_t e = 0; e < r->m.n_ents; e++) {
         if (!strchr(r->m.ents[e].path, '/')) {

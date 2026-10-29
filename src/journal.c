@@ -3,7 +3,7 @@
 #include <fcntl.h>
 #include <sys/stat.h>
 
-#define JMAGIC "BEAMJ001"
+#define JMAGIC "CLAPJ001"
 
 int journal_open(journal_t *j, const char *path, uint32_t n_chunks, buf_t *meta, bool *resumed)
 {

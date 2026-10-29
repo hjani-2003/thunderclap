@@ -3,7 +3,7 @@
 #ifndef DISCOVERY_H
 #define DISCOVERY_H
 
-#include "beam.h"
+#include "clap.h"
 #include <cjson/cJSON.h>
 
 int discovery_open(void);

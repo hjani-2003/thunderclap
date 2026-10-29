@@ -9,7 +9,7 @@ const CHROME = process.env.CHROME || 'google-chrome';
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
 export async function launch() {
-  const profile = mkdtempSync(join(tmpdir(), 'beam-cdp-'));
+  const profile = mkdtempSync(join(tmpdir(), 'clap-cdp-'));
   const port = 9300 + Math.floor(Math.random() * 500);
   const proc = spawn(CHROME, [
     '--headless=new', '--disable-gpu', '--hide-scrollbars', '--no-first-run',

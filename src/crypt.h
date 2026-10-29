@@ -2,7 +2,7 @@
 #ifndef CRYPT_H
 #define CRYPT_H
 
-#include "beam.h"
+#include "clap.h"
 #include <sodium.h>
 
 #define KEY_LEN 32

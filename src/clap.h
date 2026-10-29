@@ -1,6 +1,6 @@
-/* beam — common definitions shared by every module. */
-#ifndef BEAM_H
-#define BEAM_H
+/* thunderclap — common definitions shared by every module. */
+#ifndef CLAP_H
+#define CLAP_H
 
 #define _GNU_SOURCE
 #include <stdint.h>
@@ -15,7 +15,7 @@
 #include <sys/types.h>
 #include <netinet/in.h>
 
-#define BEAM_VERSION      "0.1.0"
+#define CLAP_VERSION      "0.1.0"
 #define DEFAULT_PEER_PORT 7878
 #define DEFAULT_WEB_PORT  8080
 #define DISCOVERY_PORT    7879

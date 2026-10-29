@@ -1,7 +1,7 @@
-/* beam wire protocol.
+/* thunderclap wire protocol.
  *
  * Every TCP connection starts with a plaintext hello:
- *     "BEAM" | version u8 | kind u8 | kind-specific fields
+ *     "CLAP" | version u8 | kind u8 | kind-specific fields
  * and the responder answers with a status byte plus its own fields.
  * After that, everything travels in AEAD records (see crypt.h):
  *     len u32 (big-endian, covers ciphertext + 16-byte tag) | ciphertext | tag
@@ -10,7 +10,7 @@
 #ifndef PROTO_H
 #define PROTO_H
 
-#define PROTO_MAGIC   "BEAM"
+#define PROTO_MAGIC   "CLAP"
 #define PROTO_VERSION 1
 
 /* Hello kinds */

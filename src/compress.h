@@ -2,7 +2,7 @@
 #ifndef COMPRESS_H
 #define COMPRESS_H
 
-#include "beam.h"
+#include "clap.h"
 
 #define COMPRESS_AUTO -1
 #define COMPRESS_OFF  0

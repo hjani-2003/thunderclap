@@ -1,10 +1,10 @@
 [Unit]
-Description=beam — fast encrypted file transfer daemon
+Description=thunderclap — fast encrypted file transfer daemon
 After=network-online.target
 Wants=network-online.target
 
 [Service]
-ExecStart=%h/.local/bin/beam daemon
+ExecStart=%h/.local/bin/clap daemon
 Restart=on-failure
 RestartSec=2
 

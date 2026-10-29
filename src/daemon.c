@@ -163,7 +163,7 @@ cJSON *ipc_call(const char *cmd, cJSON *args)
 static int ipc_listen(void)
 {
     if (ipc_ping()) {
-        LOGE("a beam daemon is already running (%s)", g_cfg.sock_path);
+        LOGE("a thunderclap daemon is already running (%s)", g_cfg.sock_path);
         return -1;
     }
     unlink(g_cfg.sock_path);
@@ -216,7 +216,7 @@ int daemon_main(void)
 
     transfers_init();
     mkdir_p(g_cfg.download_dir, 0755);
-    LOGI("beam %s — %s (%s)", BEAM_VERSION, g_cfg.name, g_cfg.fp);
+    LOGI("thunderclap %s — %s (%s)", CLAP_VERSION, g_cfg.name, g_cfg.fp);
     LOGI("peers: port %d   web UI: http://127.0.0.1:%d   downloads: %s", g_cfg.peer_port, g_cfg.web_port,
          g_cfg.download_dir);
 

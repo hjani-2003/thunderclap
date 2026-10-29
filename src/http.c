@@ -233,7 +233,7 @@ void http_serve(int fd)
             /* EventSource cannot send headers, so the token rides in the query. */
             char tok[128];
             if (!token_ok(query_param(r.query, "token", tok, sizeof tok)))
-                respond_error(fd, 403, "missing or wrong token — open the UI with `beam ui`");
+                respond_error(fd, 403, "missing or wrong token — open the UI with `clap ui`");
             else
                 serve_events(fd);
         } else
@@ -247,7 +247,7 @@ void http_serve(int fd)
     }
     const char *tok = !strncmp(r.auth, "Bearer ", 7) ? r.auth + 7 : NULL;
     if (!token_ok(tok)) {
-        respond_error(fd, 403, "missing or wrong token — open the UI with `beam ui`");
+        respond_error(fd, 403, "missing or wrong token — open the UI with `clap ui`");
         goto out;
     }
     cJSON *args = r.content_length ? cJSON_Parse(r.body) : cJSON_CreateObject();

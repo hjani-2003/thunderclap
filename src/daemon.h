@@ -1,7 +1,7 @@
 #ifndef DAEMON_H
 #define DAEMON_H
 
-#include "beam.h"
+#include "clap.h"
 #include <cjson/cJSON.h>
 
 int daemon_main(void);

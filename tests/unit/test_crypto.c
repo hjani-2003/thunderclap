@@ -70,7 +70,7 @@ static void test_channel(int cipher)
     chan_init(&b, sv[1], cipher, master, "data", 3, salt, false);
 
     /* round trip, both directions */
-    const char *msg = "hello beam";
+    const char *msg = "hello thunderclap";
     CHECK(chan_send_copy(&a, msg, strlen(msg)) == 0);
     size_t n;
     uint8_t *got = chan_recv(&b, &n);

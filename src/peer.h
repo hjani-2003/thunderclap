@@ -3,7 +3,7 @@
 #ifndef PEER_H
 #define PEER_H
 
-#include "beam.h"
+#include "clap.h"
 #include "crypt.h"
 #include "config.h"
 

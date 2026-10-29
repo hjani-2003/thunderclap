@@ -2,7 +2,7 @@
 
 /* ---------- token & API ---------- */
 
-const TOKEN_KEY = 'beam-token';
+const TOKEN_KEY = 'clap-token';
 let token = null;
 {
   const m = location.hash.match(/token=([0-9a-f]+)/);
@@ -117,7 +117,7 @@ function renderPeers() {
   const online = list.filter((p) => p.online).length;
   $('peer-count').textContent = list.length ? `${online} online` : '';
   if (!list.length) {
-    ul.append(h('li', { class: 'empty' }, 'No devices yet. Start beam on another machine on this network, then pair with it.'));
+    ul.append(h('li', { class: 'empty' }, 'No devices yet. Start thunderclap on another machine on this network, then pair with it.'));
   }
   for (const p of list) {
     const actions = p.paired
@@ -469,7 +469,7 @@ async function openCode(kind) {
     ? 'Enter this code on the other machine. After pairing, the two devices recognise each other automatically.'
     : 'Give this code to the sender. It works once, for one transfer, without pairing.';
   $('code-value').textContent = r.code;
-  $('code-cmd').textContent = kind === 'pair' ? `beam pair ${r.name} ${r.code}` : `beam send <files> --to ${r.name} --code ${r.code}`;
+  $('code-cmd').textContent = kind === 'pair' ? `clap pair ${r.name} ${r.code}` : `clap send <files> --to ${r.name} --code ${r.code}`;
   $('code-status').textContent = 'Waiting…';
   const until = Date.now() + r.ttl * 1000;
   clearInterval(codeTimer);
@@ -561,7 +561,7 @@ function onState(s) {
   $('dev-name').textContent = i.name;
   $('dev-fp').textContent = i.fp;
   $('dev-cipher').textContent = i.cipher;
-  document.title = `beam · ${i.name}`;
+  document.title = `thunderclap · ${i.name}`;
   if (firstState) {
     firstState = false;
     $('streams').value = i.streams;

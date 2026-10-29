@@ -2,11 +2,11 @@
 #ifndef CONFIG_H
 #define CONFIG_H
 
-#include "beam.h"
+#include "clap.h"
 #include "crypt.h"
 
 typedef struct {
-    char home[1024];          /* ~/.config/beam or $BEAM_HOME */
+    char home[1024];          /* ~/.config/thunderclap or $CLAP_HOME */
     char sock_path[1100];     /* unix socket for the CLI */
     char name[128];           /* device name shown to peers */
     char download_dir[1024];
@@ -25,7 +25,7 @@ extern config_t g_cfg;
 /* Loads (creating defaults where missing). `home` may be NULL. */
 int config_load(const char *home);
 int config_save(void);
-/* Path of a file inside the beam home directory. */
+/* Path of a file inside the thunderclap home directory. */
 void config_path(const char *file, char *out, size_t n);
 
 typedef struct {
