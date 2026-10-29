@@ -26,6 +26,8 @@ The name comes from *Thunder Breathing, First Form: Thunderclap and Flash*, from
 ## Install
 
 ```bash
+git clone https://github.com/hjani-2003/thunderclap.git
+cd thunderclap
 sudo apt install build-essential pkg-config libsodium-dev libzstd-dev libxxhash-dev libcjson-dev
 make
 make install          # → ~/.local/bin/clap + a systemd user unit
@@ -182,3 +184,9 @@ make docs    # rebuild docs/thunderclap-user-guide.pdf from docs/guide/ (needs N
   - delta sync, like rsync;
   - drag-and-drop upload in the browser;
   - io_uring.
+
+## License
+
+Copyright (C) 2026 Harman
+
+thunderclap is free software: you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version. It is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; see [LICENSE](LICENSE) for the full text.
