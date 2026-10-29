@@ -152,8 +152,8 @@ if it isn't running.</p>
 <h2>Requirements</h2>
 <ul>
   <li>A Linux distribution (developed on Ubuntu; any modern distribution works).</li>
-  <li>GCC 15 or newer, or Clang 19 or newer — the web dashboard is compiled into the program with the C23 <code>#embed</code> feature.</li>
-  <li>Four small libraries: <strong>libsodium</strong> (encryption), <strong>zstd</strong> (compression), <strong>xxHash</strong> (checksums) and <strong>cJSON</strong>.</li>
+  <li>A C compiler with C11 support — any GCC or Clang from the last several years (tested with GCC 12 and 15).</li>
+  <li>Four small libraries: <strong>libsodium</strong> 1.0.18 or newer (encryption), <strong>zstd</strong> (compression), <strong>xxHash</strong> (checksums) and <strong>cJSON</strong>.</li>
 </ul>
 
 <h2>Build and install</h2>
@@ -718,6 +718,7 @@ or <code>host[:port]</code>.</p>
     <tr><td class="k"><code>src/discovery.c</code>, <code>transfer.c</code>, <code>config.c</code></td><td>LAN beacons, transfer state and history, settings and peer store</td></tr>
     <tr><td class="k"><code>src/proto.h</code></td><td>Wire protocol definition</td></tr>
     <tr><td class="k"><code>web/</code></td><td>Dashboard (plain HTML, CSS, JavaScript — no build step), embedded into the binary</td></tr>
+    <tr><td class="k"><code>tools/bin2c.c</code></td><td>Build helper that turns the dashboard files into C arrays</td></tr>
     <tr><td class="k"><code>tests/</code></td><td>Unit tests and the end-to-end script</td></tr>
     <tr><td class="k"><code>docs/</code></td><td>This guide: source in <code>docs/guide/</code>, screenshots in <code>docs/img/</code>, tools in <code>docs/tools/</code></td></tr>
   </tbody>

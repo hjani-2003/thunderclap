@@ -40,7 +40,7 @@ Open the ports on both machines if a firewall is on:
 sudo ufw allow 7878/tcp && sudo ufw allow 7879/udp
 ```
 
-Building needs GCC ≥ 15 or Clang ≥ 19, because the web UI is compiled into the binary with C23 `#embed`.
+Any compiler with C11 support works (tested with GCC 12 and GCC 15). libsodium must be 1.0.18 or newer; that's the release that added the ristretto255 functions pairing uses. The web UI is turned into C arrays at build time by `tools/bin2c.c`, so no extra tools are needed.
 
 ## Quick start
 

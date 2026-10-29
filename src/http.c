@@ -10,18 +10,9 @@
 #define MAX_HEADER (16 * 1024)
 #define MAX_BODY   (1 << 20)
 
-static const char index_html[] = {
-#embed "../web/index.html" suffix(,)
-    0
-};
-static const char app_js[] = {
-#embed "../web/app.js" suffix(,)
-    0
-};
-static const char style_css[] = {
-#embed "../web/style.css" suffix(,)
-    0
-};
+/* The web UI, compiled into the binary (build/webui.c, made by tools/bin2c.c). */
+extern const char index_html[], app_js[], style_css[];
+extern const size_t index_html_len, app_js_len, style_css_len;
 
 typedef struct {
     char method[8];
@@ -224,11 +215,11 @@ void http_serve(int fd)
 
     if (!strcmp(r.method, "GET")) {
         if (!strcmp(r.path, "/") || !strcmp(r.path, "/index.html"))
-            respond(fd, 200, "text/html; charset=utf-8", index_html, sizeof index_html - 1);
+            respond(fd, 200, "text/html; charset=utf-8", index_html, index_html_len);
         else if (!strcmp(r.path, "/app.js"))
-            respond(fd, 200, "text/javascript; charset=utf-8", app_js, sizeof app_js - 1);
+            respond(fd, 200, "text/javascript; charset=utf-8", app_js, app_js_len);
         else if (!strcmp(r.path, "/style.css"))
-            respond(fd, 200, "text/css; charset=utf-8", style_css, sizeof style_css - 1);
+            respond(fd, 200, "text/css; charset=utf-8", style_css, style_css_len);
         else if (!strcmp(r.path, "/api/events")) {
             /* EventSource cannot send headers, so the token rides in the query. */
             char tok[128];

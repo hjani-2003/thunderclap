@@ -1,13 +1,13 @@
 CC      ?= gcc
 PKGS    := libsodium libzstd libcjson libxxhash
 CFLAGS  ?= -O2 -g
-CFLAGS  += -std=gnu23 -Wall -Wextra -Wno-unused-parameter -Wno-format-truncation -pthread $(shell pkg-config --cflags $(PKGS))
+CFLAGS  += -std=gnu11 -Wall -Wextra -Wno-unused-parameter -Wno-format-truncation -pthread $(shell pkg-config --cflags $(PKGS))
 LDLIBS  += $(shell pkg-config --libs $(PKGS)) -pthread
 PREFIX  ?= $(HOME)/.local
 
 SRC := $(wildcard src/*.c)
-OBJ := $(SRC:src/%.c=build/%.o)
-WEB := $(wildcard web/*)
+OBJ := $(SRC:src/%.c=build/%.o) build/webui.o
+WEB := web/index.html web/app.js web/style.css
 
 all: clap
 
@@ -17,8 +17,15 @@ clap: $(OBJ)
 build/%.o: src/%.c src/*.h | build
 	$(CC) $(CFLAGS) -c -o $@ $<
 
-# The web UI is compiled into the binary with #embed.
-build/http.o: $(WEB)
+# The web UI is compiled into the binary as C arrays.
+build/bin2c: tools/bin2c.c | build
+	$(CC) -O2 -o $@ $<
+
+build/webui.c: build/bin2c $(WEB)
+	build/bin2c index_html web/index.html app_js web/app.js style_css web/style.css > $@
+
+build/webui.o: build/webui.c
+	$(CC) $(CFLAGS) -c -o $@ $<
 
 build:
 	mkdir -p build
