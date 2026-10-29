@@ -8,6 +8,7 @@
 #include "transfer.h"
 
 #include <dirent.h>
+#include <netdb.h>
 #include <stdarg.h>
 #include <sys/stat.h>
 
@@ -17,7 +18,7 @@
 static cJSON *error(const char *fmt, ...) __attribute__((format(printf, 1, 2)));
 static cJSON *error(const char *fmt, ...)
 {
-    char msg[512];
+    char msg[768];
     va_list ap;
     va_start(ap, fmt);
     vsnprintf(msg, sizeof msg, fmt, ap);
@@ -93,6 +94,37 @@ static cJSON *peers_json(void)
     return j;
 }
 
+static bool host_resolves(const char *host)
+{
+    struct addrinfo hints = { .ai_socktype = SOCK_STREAM }, *res;
+    if (getaddrinfo(host, NULL, &hints, &res) != 0)
+        return false;
+    freeaddrinfo(res);
+    return true;
+}
+
+/* A name that is neither a discovered device nor a host name: say so, and
+ * list what is on the network (long model-number names are easy to mistype). */
+static void unknown_peer(const char *to, char *err, size_t errn)
+{
+    cJSON *list = discovery_json();
+    char names[400] = "";
+    size_t used = 0;
+    const cJSON *d;
+    cJSON_ArrayForEach(d, list) {
+        const cJSON *nm = cJSON_GetObjectItem(d, "name");
+        if (cJSON_IsString(nm) && used < sizeof names - 1)
+            used += (size_t)snprintf(names + used, sizeof names - used, "%s%s", used ? ", " : "", nm->valuestring);
+    }
+    cJSON_Delete(list);
+    if (names[0])
+        snprintf(err, errn, "no device called '%s' on this network. Found: %s "
+                 "(a fingerprint prefix or IP address works too)", to, names);
+    else
+        snprintf(err, errn, "no device called '%s' found — is thunderclap running there? "
+                 "Check `clap peers`, or use its IP address", to);
+}
+
 /* Works out where to connect and how to authenticate for "--to X". */
 static int resolve_target(const char *to, bool with_code, send_req_t *rq, char *err, size_t errn)
 {
@@ -123,8 +155,9 @@ static int resolve_target(const char *to, bool with_code, send_req_t *rq, char *
         snprintf(err, errn, "%s is not paired — run `clap pair` on it, or use a one-shot code", rq->peer_name);
         return -1;
     }
-    if (parse_host_port(to, rq->host, sizeof rq->host, &rq->port, DEFAULT_PEER_PORT) < 0) {
-        snprintf(err, errn, "unknown peer '%s'", to);
+    if (parse_host_port(to, rq->host, sizeof rq->host, &rq->port, DEFAULT_PEER_PORT) < 0 ||
+        !host_resolves(rq->host)) {
+        unknown_peer(to, err, errn);
         return -1;
     }
     if (with_code)
@@ -172,7 +205,7 @@ static cJSON *cmd_send(const cJSON *args, bool bench)
     if (!to || !*to)
         return error("missing 'to'");
     send_req_t rq = { 0 };
-    char err[256];
+    char err[600];
     if (resolve_target(to, code && *code, &rq, err, sizeof err) < 0)
         return error("%s", err);
     if (code)
@@ -247,11 +280,13 @@ static cJSON *cmd_pair_join(const cJSON *args)
         return error("usage: pair_join {to, code}");
     char host[256];
     int port;
-    if (!discovery_lookup(to, host, sizeof host, &port, NULL, NULL, 0) &&
-        parse_host_port(to, host, sizeof host, &port, DEFAULT_PEER_PORT) < 0)
-        return error("unknown peer '%s'", to);
     peer_t p;
-    char err[256];
+    char err[600];
+    if (!discovery_lookup(to, host, sizeof host, &port, NULL, NULL, 0) &&
+        (parse_host_port(to, host, sizeof host, &port, DEFAULT_PEER_PORT) < 0 || !host_resolves(host))) {
+        unknown_peer(to, err, sizeof err);
+        return error("%s", err);
+    }
     if (pair_join(host, port, code, &p, err, sizeof err) < 0)
         return error("%s", err);
     cJSON *j = cJSON_CreateObject();

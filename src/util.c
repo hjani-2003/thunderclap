@@ -248,6 +248,9 @@ int tcp_connect(const char *host, int port, int timeout_ms)
                 socklen_t el = sizeof err;
                 getsockopt(fd, SOL_SOCKET, SO_ERROR, &err, &el);
                 rc = err ? -1 : 0;
+                errno = err;
+            } else {
+                errno = ETIMEDOUT;
             }
         }
         if (rc == 0) {

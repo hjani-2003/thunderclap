@@ -122,7 +122,13 @@ static int finish_connect(session_conn_t *s, const char *host, int port, char *e
     s->peer_port = port;
     s->fd = tcp_connect(host, port, 5000);
     if (s->fd < 0) {
-        snprintf(err, errn, "cannot connect to %s:%d: %s", host, port, strerror(errno));
+        int e = errno;
+        if (e == EHOSTUNREACH || e == ETIMEDOUT || e == ENETUNREACH)
+            snprintf(err, errn, "cannot reach %s:%d (%s). If the device shows up in `clap peers`, something "
+                     "between the machines blocks direct connections: a firewall on it (allow TCP %d), or "
+                     "\"client/AP isolation\" on the Wi-Fi router", host, port, strerror(e), port);
+        else
+            snprintf(err, errn, "cannot connect to %s:%d: %s", host, port, strerror(e));
         return -1;
     }
     set_timeout(s->fd, HANDSHAKE_TIMEOUT);
